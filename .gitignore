@@ -1,0 +1,33 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Java / Spring Boot
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.log
+
+# Node / React Native (Expo)
+**/node_modules/
+frontend/boi-app/.expo/
+frontend/boi-app/dist/
+frontend/boi-app/.next/
+frontend/boi-app/.turbo/
+frontend/boi-app/npm-debug.log*
+frontend/boi-app/yarn-debug.log*
+frontend/boi-app/yarn-error.log*
+
+# Expo native builds
+frontend/boi-app/ios/
+frontend/boi-app/android/
+
+.github/appmod/
+.github/appmod/appcat/
