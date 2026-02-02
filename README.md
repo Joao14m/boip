@@ -44,14 +44,20 @@ git --version
 
 ### 2) Clone the repo
 git clone https://github.com/Joao14m/boip.git
+
 cd boip
 
 ### 3) Set up .env in repo root
 # Database
+
 DB_HOST=localhost
+
 DB_PORT=5432
+
 DB_NAME=boip
+
 DB_USER=boip_user
+
 DB_PASSWORD=boip_pass
 
 # API Base URL 
@@ -63,28 +69,31 @@ PUBLIC_API_BASE=http://YOUR_IP:8080
 ### 4) Start project
 
 1. Backend
+
   a) Start by Docker Compose
 
-  cd boip
+    cd boip
   
-  docker compose up --build
+    docker compose up --build
   
   b) Start by Makefile
   
-  cd boip
+    cd boip
   
-  make up
+    make up
 
 2. Frontend
+
    Open a terminal
 
-   cd frontend
+     cd frontend
 
-   npm install
+     npm install
 
-   npm run start
+     npm run start
    
-   Download Expo Go
-   Scan the QR Code in the terminal, which it will open Expo Go
+     Download Expo Go
+
+     Scan the QR Code in the terminal, which it will open Expo Go
 
 
