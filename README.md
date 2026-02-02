@@ -11,11 +11,17 @@ A mobile marketplace app for buying/selling cattle (“boi”). The frontend (mo
 
 ## Repo Structure
 /boip
+  
   /backend
+  
   /frontend
+  
   .env.example
+  
   docker-compose.yml
+  
   Makefile
+  
   README.md
 
 ## Quick Start (Local Dev)
@@ -51,23 +57,31 @@ DB_PASSWORD=boip_pass
 # API Base URL 
 - If running on the same machine: http://localhost:8080
 - If testing on your phone: use your computer LAN IP (check by ipconfig in cmd)
+
 PUBLIC_API_BASE=http://YOUR_IP:8080
 
 ### 4) Start project
 
 1. Backend
   a) Start by Docker Compose
+
   cd boip
+  
   docker compose up --build
   
   b) Start by Makefile
+  
   cd boip
+  
   make up
 
 2. Frontend
    Open a terminal
+
    cd frontend
+
    npm install
+
    npm run start
    
    Download Expo Go
