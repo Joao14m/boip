@@ -27,7 +27,8 @@ public class AuthController {
         if (authentication == null || !(authentication.getPrincipal() instanceof AuthUser u)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
         }
-        return new AuthMeResponse(u.uid(), u.email(), u.emailVerified());
+        var status = authService.meStatus(u.uid());
+        return new AuthMeResponse(u.uid(), u.email(), u.emailVerified(), status.onboarded(), status.userId());
     }
 
     @PostMapping("/onboard")

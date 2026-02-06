@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health").permitAll()
-                        .requestMatchers("/auth/me").authenticated()
+                        .requestMatchers("/auth/me").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/onboard").authenticated()
                         .anyRequest().authenticated()
                 )
