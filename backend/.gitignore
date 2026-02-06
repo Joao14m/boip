@@ -31,3 +31,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Secrets local
+secrets/
+**/secrets/
+*.secret.json
+firebase-service-account.json
+
+# Env local
+.env
+*.env

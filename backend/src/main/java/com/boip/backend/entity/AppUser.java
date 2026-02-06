@@ -14,7 +14,7 @@ public class AppUser {
     @Column(columnDefinition = "uuid")
     private UUID id;
 
-    @Column(name = "firebase_uid", nullable = false, unique = true)
+    @Column(name = "firebase_uid", nullable = false, unique = true, length = 128)
     private String firebaseUid;
 
     @Column(name = "email", nullable = false, length = 255)
@@ -50,7 +50,7 @@ public class AppUser {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    // ✅ resolve created_at/updated_at null no INSERT
+    // resolve created_at/updated_at null no INSERT
     @PrePersist
     private void prePersist() {
         OffsetDateTime now = OffsetDateTime.now();

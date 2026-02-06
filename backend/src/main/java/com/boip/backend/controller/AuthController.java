@@ -25,7 +25,7 @@ public class AuthController {
     @GetMapping("/me")
     public AuthMeResponse me(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof AuthUser u)) {
-            return new AuthMeResponse(null, null, false);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
         }
         return new AuthMeResponse(u.uid(), u.email(), u.emailVerified());
     }

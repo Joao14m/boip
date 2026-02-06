@@ -35,45 +35,42 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
         String idToken = header.substring("Bearer ".length()).trim();
 
-        FirebaseToken decoded;
         try {
-            decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
+
+            Set<String> roles = extractRoles(decoded.getClaims());
+            var authorities = roles.stream()
+                    .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toSet());
+
+            AuthUser principal = new AuthUser(
+                    decoded.getUid(),
+                    decoded.getEmail(),
+                    Boolean.TRUE.equals(decoded.isEmailVerified()),
+                    roles
+            );
+
+            var auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
         } catch (Exception ex) {
             SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"invalid_token\"}");
-            return;
+            // deixa o Spring Security responder 401/403
         }
 
-        Set<String> roles = extractRoles(decoded.getClaims());
-        var authorities = roles.stream()
-                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toSet());
+        chain.doFilter(request, response);
+    }
 
-        AuthUser principal = new AuthUser(
-                decoded.getUid(),
-                decoded.getEmail(),
-                Boolean.TRUE.equals(decoded.isEmailVerified()),
-                roles
-        );
-
-                var auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(auth);
-        
-                // IMPORTANT: fora do try/catch
-                chain.doFilter(request, response);
-            }
-        
-            private Set<String> extractRoles(Map<String, Object> claims) {
-                Object roles = claims.get("roles");
-                if (roles instanceof Collection) {
-                    return ((Collection<?>) roles).stream()
-                            .map(Object::toString)
-                            .collect(Collectors.toSet());
-                }
-                return Set.of();
-            }
+    private Set<String> extractRoles(Map<String, Object> claims) {
+        Object roles = claims.get("roles");
+        if (roles instanceof Collection) {
+            return ((Collection<?>) roles).stream()
+                    .map(Object::toString)
+                    .collect(Collectors.toSet());
         }
+        return Set.of();
+    }
+}
+
     
