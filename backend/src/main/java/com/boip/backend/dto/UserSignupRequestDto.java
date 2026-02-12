@@ -9,6 +9,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+// DTO for creating a new user
+
 @Data @NoArgsConstructor @AllArgsConstructor @Builder 
 @Getter @Setter
 public class UserSignupRequestDto {
