@@ -11,9 +11,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
 
-@Getter @Setter @NoArgsConstructor
-@Entity
-@Table(name = "app_user")
+@Getter @Setter 
+@NoArgsConstructor @AllArgsConstructor @Builder
+@Entity @Table(name = "app_user")
 public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

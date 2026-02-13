@@ -10,7 +10,6 @@ import com.boip.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -21,9 +20,8 @@ public class UserController {
     private final UserService userService;    
     
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody UserSignupRequestDto req){
-        userService.signup(req);
-        return ResponseEntity.accepted().build(); 
+    public UserResponseDto signup(@Valid @RequestBody UserSignupRequestDto req){
+        return userService.signup(req);
     }
     
 }

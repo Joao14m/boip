@@ -2,7 +2,6 @@ package com.boip.backend.service;
 
 import java.time.OffsetDateTime;
 
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -13,14 +12,12 @@ import com.boip.backend.dto.UserSignupRequestDto;
 import com.boip.backend.entity.AppUser;
 import com.boip.backend.repository.AppUserRepository;
 
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@Builder
 @RequiredArgsConstructor
 public class UserService {
-    private final AppUserRepository users;
+    private final AppUserRepository usersRepository;
 
     public UserResponseDto signup(UserSignupRequestDto req){
         String email = req.getEmail().trim();
@@ -44,43 +41,41 @@ public class UserService {
             carNumber = null;
         }
         // pre-checks (optional; still keep DB as source of truth)
-        if (users.existsByEmailIgnoreCase(email)) {
+        if (usersRepository.existsByEmailIgnoreCase(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already exists");
         }
-        if (users.existsByPersonDoc(personDoc)) {
+        if (usersRepository.existsByPersonDoc(personDoc)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "personDoc already exists");
         }
 
-        AppUser u = new AppUser();
-        u.setFirstName(req.getFirstName().trim());
-        u.setLastName(req.getLastName().trim());
-        u.setEmail(email);
-        u.setPhone(req.getPhone().trim());
-        u.setDocType(docType);
-        u.setPersonDoc(personDoc);
-        u.setHasCar(req.getHasCar());
-        u.setCarNumber(carNumber);
-        u.setLocationId(req.getLocationId());
-
-        // DB has defaults, but JPA will send null unless we set them.
-        // Setting them here keeps response consistent.
         OffsetDateTime now = OffsetDateTime.now();
-        u.setCreatedAt(now);
-        u.setUpdatedAt(now);
-        
-        users.save(u);
+
+        AppUser userEntity = AppUser.builder()
+            .firstName(req.getFirstName())
+            .lastName(req.getLastName())
+            .email(email)
+            .phone(req.getPhone())
+            .personDoc(personDoc)
+            .docType(docType)
+            .hasCar(req.getHasCar())
+            .locationId(req.getLocationId())
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
 
         try {
+            AppUser saved = usersRepository.saveAndFlush(userEntity);
+
             return UserResponseDto.builder()
-                .id(u.getId())
-                .firstName(u.getFirstName())
-                .lastName(u.getLastName())
-                .email(u.getEmail())
-                .phone(u.getPhone())
-                .docType(u.getDocType())
-                .hasCar(u.isHasCar())
-                .carNumber(u.getCarNumber())
-                .locationId(u.getLocationId())
+                .id(saved.getId())
+                .firstName(saved.getFirstName())
+                .lastName(saved.getLastName())
+                .email(saved.getEmail())
+                .phone(saved.getPhone())
+                .docType(saved.getDocType())
+                .hasCar(saved.isHasCar())
+                .carNumber(saved.getCarNumber())
+                .locationId(saved.getLocationId())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
