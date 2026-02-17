@@ -52,20 +52,32 @@
     		<scope>test</scope>
   		</dependency>
 
-  <!-- PostgreSQL driver -->
+		<!-- Unit Test -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+  		<!-- PostgreSQL driver -->
   		<dependency>
     		<groupId>org.postgresql</groupId>
     		<artifactId>postgresql</artifactId>
    			<scope>runtime</scope>
   		</dependency>
 
-  <!-- Flyway -->
+  		<!-- Flyway -->
   		<dependency>
     		<groupId>org.flywaydb</groupId>
     		<artifactId>flyway-core</artifactId>
   		</dependency>
 
-  <!-- Flyway database support for PostgreSQL (Flyway v10 modular) -->
+  		<!-- Flyway database support for PostgreSQL (Flyway v10 modular) -->
   		<dependency>
     		<groupId>org.flywaydb</groupId>
     		<artifactId>flyway-database-postgresql</artifactId>

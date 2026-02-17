@@ -1,6 +1,7 @@
 package com.boip.backend.service;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.boip.backend.dto.UserResponseDto;
 import com.boip.backend.dto.UserSignupRequestDto;
+import com.boip.backend.dto.UserUpdateRequestDto;
 import com.boip.backend.entity.AppUser;
 import com.boip.backend.repository.AppUserRepository;
 
@@ -66,22 +68,59 @@ public class UserService {
         try {
             AppUser saved = usersRepository.saveAndFlush(userEntity);
 
-            return UserResponseDto.builder()
-                .id(saved.getId())
-                .firstName(saved.getFirstName())
-                .lastName(saved.getLastName())
-                .email(saved.getEmail())
-                .phone(saved.getPhone())
-                .docType(saved.getDocType())
-                .hasCar(saved.isHasCar())
-                .carNumber(saved.getCarNumber())
-                .locationId(saved.getLocationId())
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
+            return toDto(saved);
         } catch (DataIntegrityViolationException e) {
             // catches FK location_id not found, or unique constraints if race condition
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
         }
     }
+
+    public UserResponseDto readUser(UUID id){
+        AppUser userEntity = usersRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return toDto(userEntity);
+    }
+
+    public UserResponseDto updateUser(UUID id, UserUpdateRequestDto req){
+        AppUser existing = usersRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        
+        if (req.getFirstName() != null && !req.getFirstName().trim().isEmpty()) existing.setFirstName(req.getFirstName().trim());
+        if (req.getLastName() != null && !req.getLastName().trim().isEmpty()) existing.setLastName(req.getLastName().trim());
+        if (req.getEmail() != null && !req.getEmail().trim().isEmpty()) existing.setEmail(req.getEmail().trim().toLowerCase());
+        if (req.getPhone() != null && !req.getPhone().trim().isEmpty()) existing.setPhone(req.getPhone().trim());
+        if (req.getPersonDoc() != null && !req.getPersonDoc().trim().isEmpty()) existing.setPersonDoc(req.getPersonDoc().trim());
+        if (req.getDocType() != null && !req.getDocType().trim().isEmpty()) existing.setDocType(req.getDocType().trim().toUpperCase());
+        if (req.getCarNumber() != null && !req.getCarNumber().trim().isEmpty()) existing.setCarNumber(req.getCarNumber().trim());
+        if (req.getLocationId() != null) existing.setLocationId(req.getLocationId());
+
+        try {
+            AppUser saved = usersRepository.save(existing);
+            return toDto(saved);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
+        }
+    }
+
+    public void deleteUser(UUID id){
+        if (!usersRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id);
+        }
+        usersRepository.deleteById(id);
+    }
+
+    private UserResponseDto toDto(AppUser userEntity){
+        return UserResponseDto.builder()
+                .id(userEntity.getId())
+                .firstName(userEntity.getFirstName())
+                .lastName(userEntity.getLastName())
+                .email(userEntity.getEmail())
+                .phone(userEntity.getPhone())
+                .docType(userEntity.getDocType())
+                .hasCar(userEntity.isHasCar())
+                .carNumber(userEntity.getCarNumber())
+                .locationId(userEntity.getLocationId())
+                .createdAt(userEntity.getCreatedAt())
+                .updatedAt(userEntity.getUpdatedAt())
+                .build();
+    }
+
 }
