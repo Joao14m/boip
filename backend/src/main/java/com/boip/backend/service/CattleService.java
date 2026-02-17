@@ -37,7 +37,7 @@ public class CattleService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Lot Code already exists");
         
         OffsetDateTime now = OffsetDateTime.now();
-
+        
         CattleLot cattleEntity = CattleLot.builder()
             .ownerUserId(req.getOwnerUserId())
             .lotCode(lotCode)
