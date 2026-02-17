@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.boip.backend.entity.AppUser;
 import com.boip.backend.entity.CattleLot;
 
 @Repository
@@ -20,5 +20,9 @@ public interface CattleLotRepository extends JpaRepository<CattleLot, UUID>{
 
     List<CattleLot> findAllByOwnerUserIdOrderByCreatedAtDesc(UUID ownerUserId);
 
-    List<CattleLot> findAllByLocationId(UUID locationId);
+    List<CattleLot> findAllByLocationId(UUID locationId, Sort sort);
+
+    List<CattleLot> findAllByLocation_Uf(String uf, Sort sort);
+
+    List<CattleLot> findAllByLocation_Municipality(String municipality, Sort sort);
 }
