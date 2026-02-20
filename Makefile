@@ -1,6 +1,10 @@
 # Use docker compose v2 command
 DC := docker compose
 
+ENV_FILE := .env
+include $(ENV_FILE)
+export
+
 .PHONY: help up build rebuild down clean reset logs ps backend-logs db-logs db-shell db-url
 
 help:
@@ -50,4 +54,4 @@ db-logs:
 	$(DC) logs -f --tail=200 db
 
 db-shell:
-	docker exec -it pub-db psql -U $$POSTGRES_USER -d $$POSTGRES_DB
+	docker exec -it boip-db psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
