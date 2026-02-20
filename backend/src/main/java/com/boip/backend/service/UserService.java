@@ -115,7 +115,7 @@ public class UserService {
                 .email(userEntity.getEmail())
                 .phone(userEntity.getPhone())
                 .docType(userEntity.getDocType())
-                .hasCar(userEntity.isHasCar())
+                .hasCar(userEntity.getHasCar())
                 .carNumber(userEntity.getCarNumber())
                 .locationId(userEntity.getLocationId())
                 .createdAt(userEntity.getCreatedAt())

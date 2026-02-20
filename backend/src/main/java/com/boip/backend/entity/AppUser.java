@@ -69,22 +69,4 @@ public class AppUser {
     private void preUpdate() {
         this.updatedAt = OffsetDateTime.now();
     }
-
-    // getters/setters (os que seu código usa)
-    public UUID getId() { return id; }
-
-    public String getFirebaseUid() { return firebaseUid; }
-    public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-    public void setPhone(String phone) { this.phone = phone; }
-    public void setPersonDoc(String personDoc) { this.personDoc = personDoc; }
-    public void setDocType(String docType) { this.docType = docType; }
-    public void setHasCar(Boolean hasCar) { this.hasCar = hasCar; }
-    public void setCarNumber(String carNumber) { this.carNumber = carNumber; }
-    public void setLocationId(UUID locationId) { this.locationId = locationId; }
 }
