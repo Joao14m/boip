@@ -14,6 +14,7 @@ import com.boip.backend.dto.CattleLotCreateRequestDto;
 import com.boip.backend.dto.CattleLotResponseDto;
 import com.boip.backend.dto.CattleLotUpdateRequestDto;
 import com.boip.backend.entity.CattleLot;
+import com.boip.backend.mapper.CattleMapper;
 import com.boip.backend.repository.CattleLotRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class CattleService {
 
         try {
             CattleLot saved = cattleRepository.save(cattleEntity);
-            return toDto(saved);
+            return CattleMapper.toDto(saved);
         } catch (DataIntegrityViolationException e) {
             // catches FK location_id not found, or unique constraints if race condition
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
@@ -60,7 +61,7 @@ public class CattleService {
         CattleLot cattleEntity = cattleRepository.findById(id)
         .orElseThrow((() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CattleLot not found with id: " + id)));
         
-        return toDto(cattleEntity);
+        return CattleMapper.toDto(cattleEntity);
     }
 
     public void deleteLot(UUID id){
@@ -78,7 +79,7 @@ public class CattleService {
         if (req.getLocationId() != null) existing.setLocationId(req.getLocationId());
 
         CattleLot saved = cattleRepository.save(existing);
-        return toDto(saved);
+        return CattleMapper.toDto(saved);
     }
 
     public List<CattleLotResponseDto> filter(UUID locationId, String uf, String municipality, String sort, String direction){
@@ -132,18 +133,7 @@ public class CattleService {
         }
         
         // Clean way to convert a List<CattleLot> to List<CattleLotResponseDto> 
-        return res.stream().map(this::toDto).toList();
+        return res.stream().map(CattleMapper::toDto).toList();
     }
     
-    private CattleLotResponseDto toDto(CattleLot cattleEntity){
-        return CattleLotResponseDto.builder()
-                .id(cattleEntity.getId())
-                .ownerUserId(cattleEntity.getOwnerUserId())
-                .lotCode(cattleEntity.getLotCode())
-                .headCount(cattleEntity.getHeadCount())
-                .locationId(cattleEntity.getLocationId())
-                .createdAt(cattleEntity.getCreatedAt())
-                .updatedAt(cattleEntity.getUpdatedAt())
-                .build();
-    }
 }
