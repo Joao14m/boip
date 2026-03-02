@@ -1,5 +1,6 @@
 package com.boip.backend.dto;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -12,13 +13,16 @@ import lombok.Setter;
 @NoArgsConstructor @AllArgsConstructor
 @Getter @Setter
 @Builder
-public class CattleLotResponseDto {
+public class CattleLotProfileResponseDto {
     UUID id;
-    UUID ownerUserId;
-    String lotCode;
-    Integer headCount;
-    UUID locationId;
+    UUID lotId;
+    Integer profileVersion;
+    String breed;
+    String sex;
+    String purpose;
+    BigDecimal avgWeightKg;
+    Integer avgAgeMonths;
+    Integer birthYear;
+    String description;
     OffsetDateTime createdAt;
-    OffsetDateTime updatedAt;
-    CattleLotProfileResponseDto currentProfile;
 }
