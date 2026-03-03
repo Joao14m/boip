@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.boip.backend.dto.ListingMediaResponseDto;
 import com.boip.backend.dto.ListingResponseDto;
+import com.boip.backend.dto.LotSummaryDto;
 import com.boip.backend.entity.Listing;
 import com.boip.backend.entity.ListingMedia;
 
@@ -11,7 +12,7 @@ public final class ListingMapper {
 
     private ListingMapper() {}
 
-    public static ListingResponseDto toDto(Listing entity, List<ListingMediaResponseDto> media) {
+    public static ListingResponseDto toDto(Listing entity, List<ListingMediaResponseDto> media, LotSummaryDto lotSummary) {
         return ListingResponseDto.builder()
                 .id(entity.getId())
                 .lotId(entity.getLotId())
@@ -25,6 +26,7 @@ public final class ListingMapper {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .media(media)
+                .lotSummary(lotSummary)
                 .build();
     }
 

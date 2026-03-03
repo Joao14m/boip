@@ -7,6 +7,7 @@ import com.boip.backend.dto.CattleLotProfileRequestDto;
 import com.boip.backend.dto.CattleLotProfileResponseDto;
 import com.boip.backend.dto.CattleLotResponseDto;
 import com.boip.backend.dto.CattleLotUpdateRequestDto;
+import com.boip.backend.dto.PageResponseDto;
 import com.boip.backend.service.CattleService;
 
 import jakarta.validation.Valid;
@@ -44,14 +45,16 @@ public class CattleController {
         return cattleService.check(id);
     }
 
-    // Needs to add page and size for pagination
     @GetMapping
-    public List<CattleLotResponseDto> filterLot(@RequestParam(required = false) UUID locationId,
+    public PageResponseDto<CattleLotResponseDto> filterLot(
+                                                @RequestParam(required = false) UUID locationId,
                                                 @RequestParam(required = false) String uf,
                                                 @RequestParam(required = false) String municipality,
                                                 @RequestParam(required = false) String sort,
-                                                @RequestParam(required = false) String direction) {
-        return cattleService.filter(locationId, uf, municipality, sort, direction);
+                                                @RequestParam(required = false) String direction,
+                                                @RequestParam(defaultValue = "0") int page,
+                                                @RequestParam(defaultValue = "20") int size) {
+        return cattleService.filter(locationId, uf, municipality, sort, direction, page, size);
     }
 
     @PatchMapping("/{id}")

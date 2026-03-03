@@ -11,6 +11,7 @@ import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
+import com.boip.backend.dto.PageResponseDto;
 import com.boip.backend.service.ListingService;
 
 import jakarta.validation.Valid;
@@ -34,14 +35,18 @@ public class ListingController {
         return listingService.findById(id);
     }
 
-    // We can find by the seller or by the lot
+    // Filter by seller, lot, or status (marketplace feed). All results are paginated.
     @GetMapping
-    public List<ListingResponseDto> findBy(
+    public PageResponseDto<ListingResponseDto> findBy(
             @RequestParam(required = false) UUID sellerUserId,
-            @RequestParam(required = false) UUID lotId) {
-        if (sellerUserId != null) return listingService.findBySeller(sellerUserId);
-        if (lotId != null) return listingService.findByLot(lotId);
-        return List.of();
+            @RequestParam(required = false) UUID lotId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        if (sellerUserId != null) return listingService.findBySeller(sellerUserId, page, size);
+        if (lotId != null) return listingService.findByLot(lotId, page, size);
+        String effectiveStatus = (status != null && !status.isBlank()) ? status.toUpperCase() : "ACTIVE";
+        return listingService.findByStatus(effectiveStatus, page, size);
     }
 
     // Status to add to front: "DRAFT", "ACTIVE", "PAUSED", "SOLD", "CANCELLED"
