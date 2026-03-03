@@ -1,9 +1,9 @@
 package com.boip.backend.repository;
 
-import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,9 +12,9 @@ import com.boip.backend.entity.Listing;
 @Repository
 public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
-    List<Listing> findAllBySellerUserId(UUID sellerUserId);
+    Page<Listing> findAllBySellerUserId(UUID sellerUserId, Pageable pageable);
 
-    List<Listing> findAllByLotId(UUID lotId);
+    Page<Listing> findAllByLotId(UUID lotId, Pageable pageable);
 
-    List<Listing> findAllByStatus(String status, Sort sort);
+    Page<Listing> findAllByStatus(String status, Pageable pageable);
 }

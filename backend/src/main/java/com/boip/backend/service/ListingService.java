@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,16 +18,19 @@ import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
+import com.boip.backend.dto.LotSummaryDto;
+import com.boip.backend.dto.PageResponseDto;
+import com.boip.backend.entity.CattleLot;
+import com.boip.backend.entity.CattleLotProfile;
 import com.boip.backend.entity.Listing;
 import com.boip.backend.entity.ListingMedia;
 import com.boip.backend.mapper.ListingMapper;
+import com.boip.backend.repository.CattleLotProfileRepository;
+import com.boip.backend.repository.CattleLotRepository;
 import com.boip.backend.repository.ListingMediaRepository;
 import com.boip.backend.repository.ListingRepository;
 
 import lombok.RequiredArgsConstructor;
-
-// I believe I have to change this because of the media 
-// Media should be connected to the Listing, not independent
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +41,8 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final ListingMediaRepository listingMediaRepository;
+    private final CattleLotRepository cattleLotRepository;
+    private final CattleLotProfileRepository cattleLotProfileRepository;
 
     @Transactional
     public ListingResponseDto create(ListingRequestDto req) {
@@ -95,14 +102,23 @@ public class ListingService {
         return toDto(entity);
     }
 
-    public List<ListingResponseDto> findBySeller(UUID sellerUserId) {
-        return listingRepository.findAllBySellerUserId(sellerUserId)
-                .stream().map(this::toDto).toList();
+    public PageResponseDto<ListingResponseDto> findBySeller(UUID sellerUserId, int page, int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return PageResponseDto.of(listingRepository.findAllBySellerUserId(sellerUserId, pageable).map(this::toDto));
     }
 
-    public List<ListingResponseDto> findByLot(UUID lotId) {
-        return listingRepository.findAllByLotId(lotId)
-                .stream().map(this::toDto).toList();
+    public PageResponseDto<ListingResponseDto> findByLot(UUID lotId, int page, int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return PageResponseDto.of(listingRepository.findAllByLotId(lotId, pageable).map(this::toDto));
+    }
+
+    public PageResponseDto<ListingResponseDto> findByStatus(String status, int page, int size) {
+        if (!VALID_STATUSES.contains(status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid status. Must be one of: " + VALID_STATUSES);
+        }
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return PageResponseDto.of(listingRepository.findAllByStatus(status, pageable).map(this::toDto));
     }
 
     public ListingResponseDto updateStatus(UUID id, String newStatus) {
@@ -113,6 +129,9 @@ public class ListingService {
         Listing entity = listingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id));
         entity.setStatus(newStatus);
+        if ("ACTIVE".equals(newStatus) && entity.getPublishedAt() == null) {
+            entity.setPublishedAt(OffsetDateTime.now());
+        }
         return toDto(listingRepository.save(entity));
     }
 
@@ -169,6 +188,29 @@ public class ListingService {
         List<ListingMediaResponseDto> media = listingMediaRepository
                 .findAllByListingId(entity.getId())
                 .stream().map(ListingMapper::toDto).toList();
-        return ListingMapper.toDto(entity, media);
+
+        LotSummaryDto lotSummary = buildLotSummary(entity.getLotId());
+
+        return ListingMapper.toDto(entity, media, lotSummary);
+    }
+
+    private LotSummaryDto buildLotSummary(UUID lotId) {
+        CattleLot lot = cattleLotRepository.findById(lotId).orElse(null);
+        if (lot == null) return null;
+
+        CattleLotProfile profile = cattleLotProfileRepository
+                .findTopByLotIdOrderByProfileVersionDesc(lotId)
+                .orElse(null);
+
+        return LotSummaryDto.builder()
+                .lotId(lot.getId())
+                .lotCode(lot.getLotCode())
+                .headCount(lot.getHeadCount())
+                .breed(profile != null ? profile.getBreed() : null)
+                .sex(profile != null ? profile.getSex() : null)
+                .purpose(profile != null ? profile.getPurpose() : null)
+                .avgWeightKg(profile != null ? profile.getAvgWeightKg() : null)
+                .avgAgeMonths(profile != null ? profile.getAvgAgeMonths() : null)
+                .build();
     }
 }

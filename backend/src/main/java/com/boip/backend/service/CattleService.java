@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import com.boip.backend.dto.CattleLotProfileRequestDto;
 import com.boip.backend.dto.CattleLotProfileResponseDto;
 import com.boip.backend.dto.CattleLotResponseDto;
 import com.boip.backend.dto.CattleLotUpdateRequestDto;
+import com.boip.backend.dto.PageResponseDto;
 import com.boip.backend.entity.CattleLot;
 import com.boip.backend.entity.CattleLotProfile;
 import com.boip.backend.mapper.CattleMapper;
@@ -33,8 +35,6 @@ public class CattleService {
 
     private final CattleLotRepository cattleRepository;
     private final CattleLotProfileRepository profileRepository;
-
-    // ── Lot CRUD ─────────────────────────────────────────────────────────────
 
     public CattleLotResponseDto createLot(CattleLotCreateRequestDto req) {
         String lotCode = req.getLotCode().trim();
@@ -105,66 +105,45 @@ public class CattleService {
         return CattleMapper.toDto(saved, profile);
     }
 
-    public List<CattleLotResponseDto> filter(UUID locationId, String uf, String municipality, String sort, String direction) {
-        String ufT = null;
-        String municip = null;
-
-        // If not sort or direction, provide these
-        String effectiveSort = "createdAt";
-        String effectiveDir = "desc";
-
-        if (uf != null && !uf.isBlank()) {
-            ufT = uf.trim().toUpperCase();
-        }
-        if (municipality != null && !municipality.isBlank()) {
-            municip = municipality.trim();
-        }
-        if (sort != null && !sort.isBlank()) {
-            effectiveSort = sort.trim();
-        }
-        if (direction != null && !direction.isBlank()) {
-            effectiveDir = direction.trim().toLowerCase();
-        }
+    public PageResponseDto<CattleLotResponseDto> filter(UUID locationId, String uf, String municipality,
+                                                         String sort, String direction, int page, int size) {
+        String ufT = (uf != null && !uf.isBlank()) ? uf.trim().toUpperCase() : null;
+        String municip = (municipality != null && !municipality.isBlank()) ? municipality.trim() : null;
+        String effectiveSort = (sort != null && !sort.isBlank()) ? sort.trim() : "createdAt";
+        String effectiveDir = (direction != null && !direction.isBlank()) ? direction.trim().toLowerCase() : "desc";
 
         if (!"createdAt".equals(effectiveSort)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sort field: " + effectiveSort);
         }
-
         if (!effectiveDir.equals("asc") && !effectiveDir.equals("desc")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid direction: " + effectiveDir);
         }
 
-        List<CattleLot> res;
+        Sort.Direction dir = "asc".equalsIgnoreCase(effectiveDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        var pageable = PageRequest.of(page, size, Sort.by(dir, effectiveSort));
 
-        // Only allows sorting by "createdAt" for MVP safety
-        Sort.Direction dir = "asc".equalsIgnoreCase(effectiveDir)
-                ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
-
-        Sort sortObj = Sort.by(dir, effectiveSort);
+        org.springframework.data.domain.Page<CattleLot> pageResult;
 
         if (locationId == null && ufT == null && municip == null) {
-            res = cattleRepository.findAll(sortObj);
+            pageResult = cattleRepository.findAll(pageable);
         } else if (locationId != null && ufT == null && municip == null) {
-            res = cattleRepository.findAllByLocationId(locationId, sortObj);
+            pageResult = cattleRepository.findAllByLocationId(locationId, pageable);
         } else if (locationId == null && ufT != null && municip == null) {
-            res = cattleRepository.findAllByLocation_Uf(ufT, sortObj);
+            pageResult = cattleRepository.findAllByLocation_Uf(ufT, pageable);
         } else if (locationId == null && ufT == null && municip != null) {
-            res = cattleRepository.findAllByLocation_Municipality(municip, sortObj);
+            pageResult = cattleRepository.findAllByLocation_Municipality(municip, pageable);
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported filter combination (for now)");
         }
 
-        return res.stream().map(lot -> {
+        return PageResponseDto.of(pageResult.map(lot -> {
             CattleLotProfileResponseDto profile = profileRepository
                     .findTopByLotIdOrderByProfileVersionDesc(lot.getId())
                     .map(CattleMapper::profileToDto)
                     .orElse(null);
             return CattleMapper.toDto(lot, profile);
-        }).toList();
+        }));
     }
-
-    // ── Profile methods ───────────────────────────────────────────────────────
 
     public CattleLotProfileResponseDto createProfile(UUID lotId, CattleLotProfileRequestDto req) {
         if (!cattleRepository.existsById(lotId))

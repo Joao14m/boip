@@ -23,4 +23,5 @@ public class ListingResponseDto {
     OffsetDateTime createdAt;
     OffsetDateTime updatedAt;
     List<ListingMediaResponseDto> media;
+    LotSummaryDto lotSummary;
 }
