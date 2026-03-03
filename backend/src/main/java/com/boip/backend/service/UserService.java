@@ -12,6 +12,7 @@ import com.boip.backend.dto.UserResponseDto;
 import com.boip.backend.dto.UserSignupRequestDto;
 import com.boip.backend.dto.UserUpdateRequestDto;
 import com.boip.backend.entity.AppUser;
+import com.boip.backend.mapper.UserMapper;
 import com.boip.backend.repository.AppUserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -68,7 +69,7 @@ public class UserService {
         try {
             AppUser saved = usersRepository.saveAndFlush(userEntity);
 
-            return toDto(saved);
+            return UserMapper.toDto(saved);
         } catch (DataIntegrityViolationException e) {
             // catches FK location_id not found, or unique constraints if race condition
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
@@ -77,7 +78,7 @@ public class UserService {
 
     public UserResponseDto readUser(UUID id){
         AppUser userEntity = usersRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return toDto(userEntity);
+        return UserMapper.toDto(userEntity);
     }
 
     public UserResponseDto updateUser(UUID id, UserUpdateRequestDto req){
@@ -94,7 +95,7 @@ public class UserService {
 
         try {
             AppUser saved = usersRepository.save(existing);
-            return toDto(saved);
+            return UserMapper.toDto(saved);
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
         }
@@ -105,22 +106,6 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id);
         }
         usersRepository.deleteById(id);
-    }
-
-    private UserResponseDto toDto(AppUser userEntity){
-        return UserResponseDto.builder()
-                .id(userEntity.getId())
-                .firstName(userEntity.getFirstName())
-                .lastName(userEntity.getLastName())
-                .email(userEntity.getEmail())
-                .phone(userEntity.getPhone())
-                .docType(userEntity.getDocType())
-                .hasCar(userEntity.getHasCar())
-                .carNumber(userEntity.getCarNumber())
-                .locationId(userEntity.getLocationId())
-                .createdAt(userEntity.getCreatedAt())
-                .updatedAt(userEntity.getUpdatedAt())
-                .build();
     }
 
 }
