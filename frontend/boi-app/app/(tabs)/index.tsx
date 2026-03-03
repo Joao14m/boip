@@ -4,7 +4,7 @@ import { Text, View } from "react-native";
 // cmd -> ipconfig
 // Wireless LAN adapter Wi-Fi: IPv4 Address
 // For Expo Go
-const API_BASE = process.env.PUBLIC_API_BASE;
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE;
 
 export default function TabOneScreen() {
   const [msg, setMsg] = useState("loading...");
