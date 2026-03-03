@@ -24,21 +24,34 @@ public class AuthController {
 
     @GetMapping("/me")
     public AuthMeResponse me(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof AuthUser u)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
-        }
-        var status = authService.meStatus(u.uid());
-        return new AuthMeResponse(u.uid(), u.email(), u.emailVerified(), status.onboarded(), status.userId());
+        AuthIdentity id = resolve(authentication);
+        var status = authService.meStatus(id.uid());
+        return new AuthMeResponse(id.uid(), id.email(), id.emailVerified(), status.onboarded(), status.userId());
     }
 
     @PostMapping("/onboard")
     public OnboardResponse onboard(Authentication authentication,
                                    @Valid @RequestBody AuthOnboardReq req) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof AuthUser u)) {
+        AuthIdentity id = resolve(authentication);
+        AuthUser authUser = new AuthUser(id.uid(), id.email(), id.emailVerified(), java.util.Set.of());
+        AppUser user = authService.onboard(authUser, req);
+        return new OnboardResponse(user.getId(), id.uid(), id.email(), true);
+    }
+
+    // Extracts uid/email/emailVerified from either AppUser or AuthUser principal.
+    private AuthIdentity resolve(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
         }
-
-        AppUser user = authService.onboard(u, req);
-        return new OnboardResponse(user.getId(), u.uid(), u.email(), true);
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof AppUser u) {
+            return new AuthIdentity(u.getFirebaseUid(), u.getEmail(), true);
+        }
+        if (principal instanceof AuthUser u) {
+            return new AuthIdentity(u.uid(), u.email(), u.emailVerified());
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
     }
+
+    private record AuthIdentity(String uid, String email, boolean emailVerified) {}
 }

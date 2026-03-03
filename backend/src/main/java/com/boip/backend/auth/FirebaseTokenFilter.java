@@ -1,11 +1,15 @@
 package com.boip.backend.auth;
 
+import com.boip.backend.entity.AppUser;
+import com.boip.backend.repository.AppUserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,13 +18,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class FirebaseTokenFilter extends OncePerRequestFilter {
+
+    private final AppUserRepository appUserRepository;
+    private final boolean authBypass;
+
+    public FirebaseTokenFilter(@Lazy AppUserRepository appUserRepository,
+                               @Value("${boip.auth.bypass:false}") boolean authBypass) {
+        this.appUserRepository = appUserRepository;
+        this.authBypass = authBypass;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,41 +47,42 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         String idToken = header.substring("Bearer ".length()).trim();
 
         try {
-            FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            String uid;
+            String email;
 
-            Set<String> roles = extractRoles(decoded.getClaims());
-            var authorities = roles.stream()
-                    .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toSet());
+            if (authBypass) {
+                // In bypass mode the raw token string IS the uid — no Firebase call made
+                uid = idToken;
+                email = null;
+            } else {
+                FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
+                uid = decoded.getUid();
+                email = decoded.getEmail();
+            }
 
-            AuthUser principal = new AuthUser(
-                    decoded.getUid(),
-                    decoded.getEmail(),
-                    Boolean.TRUE.equals(decoded.isEmailVerified()),
-                    roles
-            );
+            Object principal;
+            List<SimpleGrantedAuthority> authorities;
+
+            AppUser appUser = appUserRepository.findByFirebaseUid(uid).orElse(null);
+            if (appUser != null) {
+                principal = appUser;
+                authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            } else {
+                principal = new AuthUser(uid, email, false, Set.of());
+                authorities = List.of();
+            }
 
             var auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (Exception ex) {
             SecurityContextHolder.clearContext();
-            // deixa o Spring Security responder 401/403
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Invalid or expired Firebase token\"}");
+            return;
         }
 
         chain.doFilter(request, response);
     }
-
-    private Set<String> extractRoles(Map<String, Object> claims) {
-        Object roles = claims.get("roles");
-        if (roles instanceof Collection) {
-            return ((Collection<?>) roles).stream()
-                    .map(Object::toString)
-                    .collect(Collectors.toSet());
-        }
-        return Set.of();
-    }
 }
-
-    

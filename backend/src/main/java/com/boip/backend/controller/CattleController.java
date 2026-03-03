@@ -8,6 +8,7 @@ import com.boip.backend.dto.CattleLotProfileResponseDto;
 import com.boip.backend.dto.CattleLotResponseDto;
 import com.boip.backend.dto.CattleLotUpdateRequestDto;
 import com.boip.backend.dto.PageResponseDto;
+import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.CattleService;
 
 import jakarta.validation.Valid;
@@ -21,12 +22,14 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequiredArgsConstructor
@@ -59,20 +62,20 @@ public class CattleController {
 
     @PatchMapping("/{id}")
     public CattleLotResponseDto updateCattleLot(@PathVariable UUID id, @Valid @RequestBody CattleLotUpdateRequestDto req) {
-        return cattleService.updateLot(id, req);
+        return cattleService.updateLot(id, req, requireAppUser());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLot(@PathVariable UUID id) {
-        cattleService.deleteLot(id);
+        cattleService.deleteLot(id, requireAppUser());
     }
 
     @PostMapping("/{id}/profile")
     @ResponseStatus(HttpStatus.CREATED)
     public CattleLotProfileResponseDto createProfile(@PathVariable UUID id,
                                                      @RequestBody CattleLotProfileRequestDto req) {
-        return cattleService.createProfile(id, req);
+        return cattleService.createProfile(id, req, requireAppUser());
     }
 
     @GetMapping("/{id}/profile")
@@ -83,5 +86,11 @@ public class CattleController {
     @GetMapping("/{id}/profile/history")
     public List<CattleLotProfileResponseDto> getProfileHistory(@PathVariable UUID id) {
         return cattleService.getProfileHistory(id);
+    }
+
+    private AppUser requireAppUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof AppUser u) return u;
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
     }
 }

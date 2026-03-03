@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
     private final AppUserRepository usersRepository;
 
-    public UserResponseDto signup(UserSignupRequestDto req){
+    public UserResponseDto signup(String firebaseUid, UserSignupRequestDto req) {
         String email = req.getEmail().trim();
         String docType = req.getDocType().trim();
         String personDoc = req.getPersonDoc().trim();
@@ -40,10 +40,8 @@ public class UserService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "carNumber is required when hasCar is true");
             }
         } else {
-            // match your DB rule: has_car=false => car_number must be null
             carNumber = null;
         }
-        // pre-checks (optional; still keep DB as source of truth)
         if (usersRepository.existsByEmailIgnoreCase(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already exists");
         }
@@ -54,6 +52,7 @@ public class UserService {
         OffsetDateTime now = OffsetDateTime.now();
 
         AppUser userEntity = AppUser.builder()
+            .firebaseUid(firebaseUid)
             .firstName(req.getFirstName())
             .lastName(req.getLastName())
             .email(email)
@@ -61,6 +60,7 @@ public class UserService {
             .personDoc(personDoc)
             .docType(docType)
             .hasCar(req.getHasCar())
+            .carNumber(carNumber)
             .locationId(req.getLocationId())
             .createdAt(now)
             .updatedAt(now)
@@ -68,22 +68,25 @@ public class UserService {
 
         try {
             AppUser saved = usersRepository.saveAndFlush(userEntity);
-
             return UserMapper.toDto(saved);
         } catch (DataIntegrityViolationException e) {
-            // catches FK location_id not found, or unique constraints if race condition
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
         }
     }
 
-    public UserResponseDto readUser(UUID id){
-        AppUser userEntity = usersRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    public UserResponseDto readUser(UUID id) {
+        AppUser userEntity = usersRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         return UserMapper.toDto(userEntity);
     }
 
-    public UserResponseDto updateUser(UUID id, UserUpdateRequestDto req){
-        AppUser existing = usersRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        
+    public UserResponseDto updateUser(UUID id, UserUpdateRequestDto req, AppUser caller) {
+        if (!caller.getId().equals(id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized");
+        }
+        AppUser existing = usersRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
         if (req.getFirstName() != null && !req.getFirstName().trim().isEmpty()) existing.setFirstName(req.getFirstName().trim());
         if (req.getLastName() != null && !req.getLastName().trim().isEmpty()) existing.setLastName(req.getLastName().trim());
         if (req.getEmail() != null && !req.getEmail().trim().isEmpty()) existing.setEmail(req.getEmail().trim().toLowerCase());
@@ -101,11 +104,13 @@ public class UserService {
         }
     }
 
-    public void deleteUser(UUID id){
+    public void deleteUser(UUID id, AppUser caller) {
+        if (!caller.getId().equals(id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized");
+        }
         if (!usersRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id);
         }
         usersRepository.deleteById(id);
     }
-
 }

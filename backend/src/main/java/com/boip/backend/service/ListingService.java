@@ -20,6 +20,7 @@ import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.LotSummaryDto;
 import com.boip.backend.dto.PageResponseDto;
+import com.boip.backend.entity.AppUser;
 import com.boip.backend.entity.CattleLot;
 import com.boip.backend.entity.CattleLotProfile;
 import com.boip.backend.entity.Listing;
@@ -121,13 +122,16 @@ public class ListingService {
         return PageResponseDto.of(listingRepository.findAllByStatus(status, pageable).map(this::toDto));
     }
 
-    public ListingResponseDto updateStatus(UUID id, String newStatus) {
+    public ListingResponseDto updateStatus(UUID id, String newStatus, AppUser caller) {
         if (newStatus == null || !VALID_STATUSES.contains(newStatus)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Invalid status. Must be one of: " + VALID_STATUSES);
         }
         Listing entity = listingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id));
+        if (!caller.getId().equals(entity.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
+        }
         entity.setStatus(newStatus);
         if ("ACTIVE".equals(newStatus) && entity.getPublishedAt() == null) {
             entity.setPublishedAt(OffsetDateTime.now());
@@ -135,16 +139,20 @@ public class ListingService {
         return toDto(listingRepository.save(entity));
     }
 
-    public void delete(UUID id) {
-        if (!listingRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id);
+    public void delete(UUID id, AppUser caller) {
+        Listing entity = listingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id));
+        if (!caller.getId().equals(entity.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
         }
         listingRepository.deleteById(id);
     }
 
-    public ListingMediaResponseDto addMedia(ListingMediaRequestDto req) {
-        if (!listingRepository.existsById(req.getListingId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + req.getListingId());
+    public ListingMediaResponseDto addMedia(ListingMediaRequestDto req, AppUser caller) {
+        Listing listing = listingRepository.findById(req.getListingId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + req.getListingId()));
+        if (!caller.getId().equals(listing.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
         }
         if (req.getMediaSlot() < 0 || req.getMediaSlot() > 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "mediaSlot must be 0..3");
@@ -172,9 +180,13 @@ public class ListingService {
         return ListingMapper.toDto(listingMediaRepository.save(entity));
     }
 
-    public void removeMedia(UUID mediaId) {
-        if (!listingMediaRepository.existsById(mediaId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found: " + mediaId);
+    public void removeMedia(UUID mediaId, AppUser caller) {
+        ListingMedia media = listingMediaRepository.findById(mediaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found: " + mediaId));
+        Listing listing = listingRepository.findById(media.getListingId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found for media: " + mediaId));
+        if (!caller.getId().equals(listing.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
         }
         listingMediaRepository.deleteById(mediaId);
     }
