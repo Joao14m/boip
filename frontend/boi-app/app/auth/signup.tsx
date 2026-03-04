@@ -33,7 +33,7 @@ export default function SignupScreen() {
   const handleSignup = () => {
     // TODO: Firebase createUserWithEmailAndPassword then POST /api/users/signup
     console.log('signup', { firstName, lastName, email, phone, personDoc, docType, hasCar, carNumber, locationId });
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/feed');
   };
 
   return (

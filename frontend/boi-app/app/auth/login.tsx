@@ -23,7 +23,7 @@ export default function LoginScreen() {
   const handleLogin = () => {
     // TODO: Firebase signInWithEmailAndPassword(auth, email, password)
     console.log('login', { email, rememberMe });
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/feed');
   };
 
   return (
@@ -122,7 +122,7 @@ export default function LoginScreen() {
           {/* Link cadastro */}
           <View style={styles.bottomRow}>
             <Text style={styles.bottomText}>Não tem uma conta? </Text>
-            <Pressable onPress={() => router.push("/auth/signup")}>
+            <Pressable onPress={() => router.replace("/auth/signup")}>
               <Text style={styles.bottomLink}>Criar Conta</Text>
             </Pressable>
           </View>
