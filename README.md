@@ -1,99 +1,96 @@
-# BoiP
+# Agregis
 
-A mobile marketplace app for buying/selling cattle (“boi”). The frontend (mobile) is already in progress, and this repo contains (or will contain) the backend + database + deployment setup.
+A mobile marketplace for buying and selling cattle. Sellers can list lots with detailed profiles, and buyers can browse, filter, and favorite listings.
 
 ## Tech Stack
 
-- **Mobile Frontend:** React Native
-- **Backend:** Spring Boot
-- **Database:** PostgreSQL
-- **Migrations:** Flyway
+| Layer | Technology |
+|---|---|
+| Mobile | React Native + Expo Router (TypeScript) |
+| Backend | Java 21 + Spring Boot 3 |
+| Database | PostgreSQL 16 |
+| Migrations | Flyway |
+| Containers | Docker + Docker Compose |
 
-## Repo Structure
-/boip
-  
-  /backend
-  
-  /frontend
-  
-  .env.example
-  
-  docker-compose.yml
-  
-  Makefile
-  
-  README.md
+## Project Structure
 
-## Quick Start (Local Dev)
+```
+/
+├── backend/          # Spring Boot API
+├── frontend/
+│   └── boi-app/      # Expo React Native app
+├── .env.example      # Environment variable template
+├── docker-compose.yml
+├── Makefile
+└── README.md
+```
 
-### 1) Prerequisites
+## Prerequisites
 
-Install these first:
+- [Git](https://git-scm.com/)
+- [Java 21](https://adoptium.net/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Node.js](https://nodejs.org/) (LTS)
+- [Expo Go](https://expo.dev/go) on your phone (for mobile testing)
 
-- **Git**
-- **Java 21**
-- **Docker Desktop** 
-- **Postman**
-
-Check versions:
 ```bash
+# Verify installs
 java -version
 docker --version
+node --version
 git --version
 ```
 
-### 2) Clone the repo
+## Quick Start
+
+### 1. Clone the repo
+
+```bash
 git clone https://github.com/Joao14m/boip.git
-
 cd boip
+```
 
-### 3) Set up .env in repo root
-# Database
+### 2. Configure environment
 
-DB_HOST=localhost
+Copy the example file and fill in your values:
 
-DB_PORT=5432
+```bash
+cp .env.example .env
+```
 
-DB_NAME=boip
+```env
+POSTGRES_DB=boip
+POSTGRES_USER=boip_user
+POSTGRES_PASSWORD=boip_pass
 
-DB_USER=boip_user
-
-DB_PASSWORD=boip_pass
-
-# API Base URL 
-- If running on the same machine: http://localhost:8080
-- If testing on your phone: use your computer LAN IP (check by ipconfig in cmd)
-
+# Use localhost if testing in a browser/emulator on the same machine.
+# Use your LAN IP (ipconfig on Windows) if testing on a physical phone.
 PUBLIC_API_BASE=http://YOUR_IP:8080
+```
 
-### 4) Start project
+### 3. Start the backend
 
-1. Backend
+**Option A — Docker Compose**
+```bash
+docker compose up --build
+```
 
-  a) Start by Docker Compose
+**Option B — Makefile**
+```bash
+make up
+```
 
-    cd boip
-  
-    docker compose up --build
-  
-  b) Start by Makefile
-  
-    cd boip
-  
-    make up
+This starts PostgreSQL on port `5433` and the Spring Boot API on port `8080`. Flyway migrations run automatically on startup.
 
-2. Frontend
+### 4. Start the frontend
 
-   Open a terminal
+```bash
+cd frontend/boi-app
+npm install
+npx expo start
+```
 
-     cd frontend
+Then scan the QR code in the terminal with Expo Go on your phone, or press `a` for Android emulator / `i` for iOS simulator.
 
-     npm install
-
-     npm run start
-   
-     Download Expo Go
-
-     Scan the QR Code in the terminal, which it will open Expo Go
-
+> **Note:** Make sure `PUBLIC_API_BASE` in your `.env` matches the machine running the backend. If testing on a physical device, use your computer's LAN IP — not `localhost`.
 
