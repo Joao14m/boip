@@ -5,13 +5,16 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.PageResponseDto;
+import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.ListingService;
 
 import jakarta.validation.Valid;
@@ -49,28 +52,26 @@ public class ListingController {
         return listingService.findByStatus(effectiveStatus, page, size);
     }
 
-    // Status to add to front: "DRAFT", "ACTIVE", "PAUSED", "SOLD", "CANCELLED"
     @PatchMapping("/{id}/status")
     public ListingResponseDto updateStatus(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
-        return listingService.updateStatus(id, body.get("status"));
+        return listingService.updateStatus(id, body.get("status"), requireAppUser());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
-        listingService.delete(id);
+        listingService.delete(id, requireAppUser());
     }
 
-    // listingId comes from path; set on req before passing to service
     @PostMapping("/{id}/media")
     @ResponseStatus(HttpStatus.CREATED)
     public ListingMediaResponseDto addMedia(
             @PathVariable UUID id,
             @RequestBody ListingMediaRequestDto req) {
         req.setListingId(id);
-        return listingService.addMedia(req);
+        return listingService.addMedia(req, requireAppUser());
     }
 
     @GetMapping("/{id}/media")
@@ -81,6 +82,12 @@ public class ListingController {
     @DeleteMapping("/media/{mediaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeMedia(@PathVariable UUID mediaId) {
-        listingService.removeMedia(mediaId);
+        listingService.removeMedia(mediaId, requireAppUser());
+    }
+
+    private AppUser requireAppUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof AppUser u) return u;
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
     }
 }

@@ -31,6 +31,9 @@ services:
 
       # switch to validate later when you add Flyway
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      FIREBASE_SERVICE_ACCOUNT: file:/run/secrets/firebase-service-account.json
+    volumes:
+      - ./secrets/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
     ports:
       - "8080:8080"
     depends_on:
@@ -40,6 +43,8 @@ services:
 
 networks:
   pubnet:
+    driver: bridge
 
 volumes:
   pgdata:
+  

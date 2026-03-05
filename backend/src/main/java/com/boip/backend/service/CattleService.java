@@ -18,6 +18,7 @@ import com.boip.backend.dto.CattleLotProfileResponseDto;
 import com.boip.backend.dto.CattleLotResponseDto;
 import com.boip.backend.dto.CattleLotUpdateRequestDto;
 import com.boip.backend.dto.PageResponseDto;
+import com.boip.backend.entity.AppUser;
 import com.boip.backend.entity.CattleLot;
 import com.boip.backend.entity.CattleLotProfile;
 import com.boip.backend.mapper.CattleMapper;
@@ -64,7 +65,6 @@ public class CattleService {
             CattleLot saved = cattleRepository.save(cattleEntity);
             return CattleMapper.toDto(saved, null);
         } catch (DataIntegrityViolationException e) {
-            // catches FK location_id not found, or unique constraints if race condition
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
         }
     }
@@ -81,15 +81,21 @@ public class CattleService {
         return CattleMapper.toDto(lot, profile);
     }
 
-    public void deleteLot(UUID id) {
-        if (!cattleRepository.existsById(id))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "CattleLot not found with id: " + id);
+    public void deleteLot(UUID id, AppUser caller) {
+        CattleLot lot = cattleRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CattleLot not found with id: " + id));
+        if (!caller.getId().equals(lot.getOwnerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lot");
+        }
         cattleRepository.deleteById(id);
     }
 
-    public CattleLotResponseDto updateLot(UUID id, CattleLotUpdateRequestDto req) {
+    public CattleLotResponseDto updateLot(UUID id, CattleLotUpdateRequestDto req, AppUser caller) {
         CattleLot existing = cattleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lot not found"));
+        if (!caller.getId().equals(existing.getOwnerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lot");
+        }
 
         if (req.getLotCode() != null) existing.setLotCode(req.getLotCode().trim());
         if (req.getHeadCount() != null) existing.setHeadCount(req.getHeadCount());
@@ -145,9 +151,12 @@ public class CattleService {
         }));
     }
 
-    public CattleLotProfileResponseDto createProfile(UUID lotId, CattleLotProfileRequestDto req) {
-        if (!cattleRepository.existsById(lotId))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "CattleLot not found with id: " + lotId);
+    public CattleLotProfileResponseDto createProfile(UUID lotId, CattleLotProfileRequestDto req, AppUser caller) {
+        CattleLot lot = cattleRepository.findById(lotId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CattleLot not found with id: " + lotId));
+        if (!caller.getId().equals(lot.getOwnerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lot");
+        }
 
         if (req.getSex() != null && !VALID_SEX.contains(req.getSex().toUpperCase()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

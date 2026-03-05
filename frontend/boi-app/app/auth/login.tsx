@@ -7,10 +7,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/login.styles';
 
@@ -20,10 +23,22 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Firebase signInWithEmailAndPassword(auth, email, password)
-    console.log('login', { email, rememberMe });
-    router.replace('/(tabs)/feed');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Preencha e-mail e senha.');
+      return;
+    }
+    try {
+      setLoading(true);
+      await signInWithEmailAndPassword(auth, email, password);
+      router.replace('/(tabs)/feed');
+    } catch (e: any) {
+      Alert.alert('Erro ao entrar', e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -115,8 +130,9 @@ export default function LoginScreen() {
           <Pressable
             style={({ pressed }) => [styles.button, pressed ? styles.buttonPressed : null]}
             onPress={handleLogin}
+            disabled={loading}
           >
-            <Text style={styles.buttonText}>Entrar</Text>
+            <Text style={styles.buttonText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
           </Pressable>
 
           {/* Link cadastro */}

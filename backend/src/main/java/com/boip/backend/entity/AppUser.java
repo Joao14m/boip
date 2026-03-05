@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.*;
 
@@ -18,6 +20,9 @@ public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "firebase_uid", nullable = false, unique = true, length = 128)
+    private String firebaseUid;
 
     @Column(name = "first_name", nullable = false, length = 80)
     private String firstName;
@@ -38,18 +43,30 @@ public class AppUser {
     private String docType; // CPF | CNPJ
 
     @Column(name = "has_car", nullable = false)
-    private boolean hasCar;
+    private Boolean hasCar;
 
     @Column(name = "car_number", length = 30)
     private String carNumber;
 
-    // store UUID directly, no Location entity needed right now
-    @Column(name = "location_id", nullable = false)
+    @Column(name = "location_id", nullable = false, columnDefinition = "uuid")
     private UUID locationId;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    // resolve created_at/updated_at null no INSERT
+    @PrePersist
+    private void prePersist() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (this.createdAt == null) this.createdAt = now;
+        if (this.updatedAt == null) this.updatedAt = now;
+    }
+
+    @PreUpdate
+    private void preUpdate() {
+        this.updatedAt = OffsetDateTime.now();
+    }
 }

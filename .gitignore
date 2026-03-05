@@ -10,6 +10,15 @@ Thumbs.db
 !.env.example
 *.pem
 *.key
+# Firebase admin key (NUNCA commitar)
+boip/secrets/
+**/firebase-service-account.json
+**/*-adminsdk-*.json
+
+secrets/
+**/firebase-service-account.json
+**/*-adminsdk-*.json
+
 
 # Java / Spring Boot
 backend/target/
