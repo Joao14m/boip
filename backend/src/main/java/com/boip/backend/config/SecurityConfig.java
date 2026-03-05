@@ -27,6 +27,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users/signup").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/listings").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/listings/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/locations").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)

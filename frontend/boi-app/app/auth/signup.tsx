@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,22 @@ import {
   Platform,
   ScrollView,
   Switch,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { api } from '@/lib/api';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/signup.styles';
+
+type Location = {
+  id: string;
+  uf: string;
+  municipality: string;
+};
 
 export default function SignupScreen() {
   const [firstName, setFirstName] = useState('');
@@ -30,10 +40,53 @@ export default function SignupScreen() {
   const [carNumber, setCarNumber] = useState('');
   const [locationId, setLocationId] = useState('');
 
-  const handleSignup = () => {
-    // TODO: Firebase createUserWithEmailAndPassword then POST /api/users/signup
-    console.log('signup', { firstName, lastName, email, phone, personDoc, docType, hasCar, carNumber, locationId });
-    router.replace('/(tabs)/feed');
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [locationQuery, setLocationQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.get<Location[]>('/api/locations').then(setLocations).catch(() => {});
+  }, []);
+
+  const filteredLocations = useMemo(() => {
+    if (!locationQuery.trim()) return [];
+    const q = locationQuery.toLowerCase();
+    return locations
+      .filter(l => l.municipality.toLowerCase().includes(q) || l.uf.toLowerCase().includes(q))
+      .sort((a, b) => a.municipality.localeCompare(b.municipality))
+      .slice(0, 5);
+  }, [locations, locationQuery]);
+
+  const selectedLocation = locations.find(l => l.id === locationId);
+
+  const handleSignup = async () => {
+    if (!firstName || !lastName || !email || !password || !phone || !personDoc || !locationId) {
+      Alert.alert('Erro', 'Preencha todos os campos obrigatórios.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas não coincidem.');
+      return;
+    }
+    try {
+      setLoading(true);
+      await createUserWithEmailAndPassword(auth, email, password);
+      await api.post('/auth/onboard', {
+        firstName,
+        lastName,
+        phone,
+        personDoc,
+        docType,
+        hasCar,
+        carNumber: hasCar ? carNumber : null,
+        locationId,
+      });
+      router.replace('/(tabs)/feed');
+    } catch (e: any) {
+      Alert.alert('Erro ao criar conta', e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -239,28 +292,43 @@ export default function SignupScreen() {
             </View>
           )}
 
-          {/* Localização (placeholder) */}
+          {/* Localização */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Localização</Text>
             <View style={styles.inputRow}>
               <Ionicons name="location-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="ID da localização"
+                placeholder="Digite município ou UF"
                 placeholderTextColor={AgreGreen.placeholder}
-                value={locationId}
-                onChangeText={setLocationId}
-                autoCapitalize="none"
+                value={selectedLocation ? `${selectedLocation.municipality} - ${selectedLocation.uf}` : locationQuery}
+                onChangeText={(text) => { setLocationQuery(text); setLocationId(''); }}
+                onFocus={() => { if (selectedLocation) { setLocationQuery(''); setLocationId(''); } }}
+                autoCapitalize="words"
               />
             </View>
+            {filteredLocations.length > 0 && !locationId && (
+              <View style={{ marginTop: 4, gap: 2 }}>
+                {filteredLocations.map(loc => (
+                  <Pressable
+                    key={loc.id}
+                    style={{ paddingVertical: 10, paddingHorizontal: 12, backgroundColor: AgreGreen.inputBg, borderRadius: 8 }}
+                    onPress={() => { setLocationId(loc.id); setLocationQuery(''); }}
+                  >
+                    <Text style={{ color: AgreGreen.text, fontSize: 14 }}>{loc.municipality} - {loc.uf}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
 
           {/* Criar Conta */}
           <Pressable
             style={({ pressed }) => [styles.button, pressed ? styles.buttonPressed : null]}
             onPress={handleSignup}
+            disabled={loading}
           >
-            <Text style={styles.buttonText}>Criar Conta</Text>
+            <Text style={styles.buttonText}>{loading ? 'Criando conta...' : 'Criar Conta'}</Text>
           </Pressable>
 
           {/* Link login */}
