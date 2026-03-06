@@ -11,11 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/my-lots/my-lots.styles';
-
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE;
-
-// TODO: replace with real authenticated user ID
-const MOCK_USER_ID = '';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
 
 type SubTab = 'favoritos' | 'meus';
 
@@ -62,6 +59,7 @@ function translateStatus(status: string) {
 
 /* ═══════════════════════════════════════════ */
 export default function MyLotsScreen() {
+  const { userId } = useAuth();
   const [activeTab, setActiveTab] = useState<SubTab>('favoritos');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('Todos');
   const [myListings, setMyListings] = useState<any[]>([]);
@@ -71,13 +69,12 @@ export default function MyLotsScreen() {
 
   /* ── fetch user's non-active listings (draft, paused, sold, cancelled) ── */
   useEffect(() => {
-    if (!MOCK_USER_ID) {
+    if (!userId) {
       setLoadingMy(false);
       setMyListings([]);
       return;
     }
-    fetch(`${API_BASE}/api/listings?sellerUserId=${MOCK_USER_ID}&size=50`)
-      .then((r) => r.json())
+    api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&size=50`)
       .then((data) => {
         const nonActive = (data.content ?? []).filter(
           (l: any) => l.status !== 'ACTIVE'
@@ -86,7 +83,7 @@ export default function MyLotsScreen() {
       })
       .catch(console.error)
       .finally(() => setLoadingMy(false));
-  }, []);
+  }, [userId]);
 
   /* ── fetch favorites ── */
   useEffect(() => {
