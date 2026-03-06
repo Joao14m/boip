@@ -8,9 +8,10 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/profile/profile.styles';
@@ -57,18 +58,21 @@ export default function ProfileScreen() {
       .finally(() => setLoadingUser(false));
   }, [userId]);
 
-  /* ── fetch listings ── */
-  useEffect(() => {
-    if (!userId) {
-      setLoadingListings(false);
-      setListings([]);
-      return;
-    }
-    api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&status=ACTIVE&size=50`)
-      .then((data) => setListings(data.content ?? []))
-      .catch(console.error)
-      .finally(() => setLoadingListings(false));
-  }, [userId]);
+  /* ── fetch listings (re-runs on screen focus to pick up new drafts/active) ── */
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) {
+        setLoadingListings(false);
+        setListings([]);
+        return;
+      }
+      setLoadingListings(true);
+      api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&size=50`)
+        .then((data) => setListings(data.content ?? []))
+        .catch(console.error)
+        .finally(() => setLoadingListings(false));
+    }, [userId])
+  );
 
   /* ── format document ── */
   const formatDoc = useCallback((doc: string, type: string) => {
@@ -81,13 +85,27 @@ export default function ProfileScreen() {
     return doc;
   }, []);
 
-  /* ── listing card (active only, no status badge) ── */
+  /* ── listing card ── */
   const renderListingCard = ({ item }: { item: any }) => {
     const lot = item.lotSummary;
+    const firstImage = item.media?.find((m: any) => m.mediaSlot === 0)?.mediaKey ?? null;
+    const statusLabel: Record<string, string> = { ACTIVE: 'Ativo', DRAFT: 'Rascunho', PAUSED: 'Pausado', SOLD: 'Vendido', CANCELLED: 'Cancelado' };
+    const statusColors: Record<string, { bg: string; text: string }> = {
+      ACTIVE:    { bg: '#E8F5E9', text: '#2E7D32' },
+      DRAFT:     { bg: '#FFF8E1', text: '#B8860B' },
+      PAUSED:    { bg: '#FFF3E0', text: '#E65100' },
+      SOLD:      { bg: '#E3F2FD', text: '#1565C0' },
+      CANCELLED: { bg: '#FFEBEE', text: '#C62828' },
+    };
+    const sc = statusColors[item.status] ?? { bg: '#F5F5F5', text: '#555' };
     return (
       <View style={styles.card}>
         <View style={styles.cardImagePlaceholder}>
-          <Ionicons name="image-outline" size={40} color="#BBB" />
+          {firstImage ? (
+            <Image source={{ uri: firstImage }} style={{ width: '100%', height: '100%', borderTopLeftRadius: 14, borderTopRightRadius: 14 }} resizeMode="cover" />
+          ) : (
+            <Ionicons name="image-outline" size={40} color="#BBB" />
+          )}
           {lot?.purpose && (
             <View style={styles.purposeBadge}>
               <Text style={styles.purposeBadgeText}>{lot.purpose}</Text>
@@ -139,6 +157,9 @@ export default function ProfileScreen() {
                 <Text style={styles.detailText}>{lot.headCount} cab.</Text>
               </View>
             )}
+          </View>
+          <View style={{ alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, backgroundColor: sc.bg }}>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: sc.text }}>{statusLabel[item.status] ?? item.status}</Text>
           </View>
         </View>
       </View>
@@ -198,7 +219,7 @@ export default function ProfileScreen() {
             <View>
               <Text style={styles.listingsTitle}>Meus Anuncios</Text>
               <Text style={styles.listingsCount}>
-                {listings.length} de {listings.length} anuncios criados
+                {listings.length} anuncio{listings.length !== 1 ? 's' : ''} criado{listings.length !== 1 ? 's' : ''}
               </Text>
             </View>
             <Pressable style={styles.createBtn} onPress={() => router.push('/listing/create')}>
