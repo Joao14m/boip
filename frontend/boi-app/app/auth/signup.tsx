@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/signup.styles';
 
@@ -26,6 +27,7 @@ type Location = {
 };
 
 export default function SignupScreen() {
+  const { refreshMe } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -81,6 +83,7 @@ export default function SignupScreen() {
         carNumber: hasCar ? carNumber : null,
         locationId,
       });
+      await refreshMe();
       router.replace('/(tabs)/feed');
     } catch (e: any) {
       Alert.alert('Erro ao criar conta', e.message);
@@ -315,7 +318,7 @@ export default function SignupScreen() {
                     style={{ paddingVertical: 10, paddingHorizontal: 12, backgroundColor: AgreGreen.inputBg, borderRadius: 8 }}
                     onPress={() => { setLocationId(loc.id); setLocationQuery(''); }}
                   >
-                    <Text style={{ color: AgreGreen.text, fontSize: 14 }}>{loc.municipality} - {loc.uf}</Text>
+                    <Text style={{ color: AgreGreen.dark, fontSize: 14 }}>{loc.municipality} - {loc.uf}</Text>
                   </Pressable>
                 ))}
               </View>

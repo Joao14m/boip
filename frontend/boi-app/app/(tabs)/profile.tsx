@@ -2,20 +2,21 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
+  TextInput,
   Pressable,
   ScrollView,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/profile/profile.styles';
-
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE;
-
-// TODO: replace with real authenticated user ID
-const MOCK_USER_ID = '';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import { auth } from '@/lib/firebase';
 
 type Tab = 'anuncios' | 'conta';
 
@@ -27,57 +28,47 @@ function formatPrice(amount: number, currency: string) {
 
 /* ═══════════════════════════════════════════ */
 export default function ProfileScreen() {
+  const { userId, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('anuncios');
   const [user, setUser] = useState<any>(null);
   const [listings, setListings] = useState<any[]>([]);
   const [location, setLocation] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingListings, setLoadingListings] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '', personDoc: '', docType: '' });
 
   /* ── fetch user ── */
   useEffect(() => {
-    if (!MOCK_USER_ID) {
+    if (!userId) {
       setLoadingUser(false);
-      setUser({
-        firstName: 'Joao',
-        lastName: 'Silva',
-        email: 'seu@email.com',
-        phone: '(34) 99999-9999',
-        personDoc: '12345678900',
-        docType: 'CPF',
-        locationId: null,
-      });
-      setLocation({ municipality: 'Uberlandia', uf: 'MG' });
       return;
     }
-    fetch(`${API_BASE}/api/users/${MOCK_USER_ID}`)
-      .then((r) => r.json())
+    api.get<any>(`/api/users/${userId}`)
       .then((data) => {
         setUser(data);
         if (data.locationId) {
-          fetch(`${API_BASE}/api/locations/${data.locationId}`)
-            .then((r) => r.json())
+          api.get<any>(`/api/locations/${data.locationId}`)
             .then(setLocation)
             .catch(console.error);
         }
       })
       .catch(console.error)
       .finally(() => setLoadingUser(false));
-  }, []);
+  }, [userId]);
 
   /* ── fetch listings ── */
   useEffect(() => {
-    if (!MOCK_USER_ID) {
+    if (!userId) {
       setLoadingListings(false);
       setListings([]);
       return;
     }
-    fetch(`${API_BASE}/api/listings?sellerUserId=${MOCK_USER_ID}&status=ACTIVE&size=50`)
-      .then((r) => r.json())
+    api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&status=ACTIVE&size=50`)
       .then((data) => setListings(data.content ?? []))
       .catch(console.error)
       .finally(() => setLoadingListings(false));
-  }, []);
+  }, [userId]);
 
   /* ── format document ── */
   const formatDoc = useCallback((doc: string, type: string) => {
@@ -210,7 +201,7 @@ export default function ProfileScreen() {
                 {listings.length} de {listings.length} anuncios criados
               </Text>
             </View>
-            <Pressable style={styles.createBtn}>
+            <Pressable style={styles.createBtn} onPress={() => router.push('/listing/create')}>
               <Ionicons name="add" size={16} color="#fff" />
               <Text style={styles.createBtnText}>Criar Anuncio</Text>
             </Pressable>
@@ -259,37 +250,109 @@ export default function ProfileScreen() {
                       Gerencie suas informacoes pessoais
                     </Text>
                   </View>
-                  <Pressable style={styles.editBtn}>
-                    <Ionicons name="create-outline" size={14} color="#fff" />
-                    <Text style={styles.editBtnText}>Editar</Text>
-                  </Pressable>
+                  {!editing ? (
+                    <Pressable style={styles.editBtn} onPress={() => {
+                      setEditForm({
+                        firstName: user.firstName ?? '',
+                        lastName: user.lastName ?? '',
+                        phone: user.phone ?? '',
+                        personDoc: user.personDoc ?? '',
+                        docType: user.docType ?? 'CPF',
+                      });
+                      setEditing(true);
+                    }}>
+                      <Ionicons name="create-outline" size={14} color="#fff" />
+                      <Text style={styles.editBtnText}>Editar</Text>
+                    </Pressable>
+                  ) : (
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <Pressable style={[styles.editBtn, { backgroundColor: '#ccc' }]} onPress={() => setEditing(false)}>
+                        <Text style={styles.editBtnText}>Cancelar</Text>
+                      </Pressable>
+                      <Pressable style={styles.editBtn} onPress={async () => {
+                        try {
+                          const updated = await api.patch<any>(`/api/users/${userId}`, editForm);
+                          setUser(updated);
+                          setEditing(false);
+                        } catch (e: any) {
+                          Alert.alert('Erro', e.message);
+                        }
+                      }}>
+                        <Text style={styles.editBtnText}>Salvar</Text>
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
 
-                <View style={styles.infoRow}>
-                  <View style={[styles.infoField, styles.infoHalf]}>
-                    <Text style={styles.infoLabel}>Nome Completo</Text>
-                    <Text style={styles.infoValue}>
-                      {user.firstName} {user.lastName}
-                    </Text>
-                  </View>
-                  <View style={[styles.infoField, styles.infoHalf]}>
-                    <Text style={styles.infoLabel}>Email</Text>
-                    <Text style={styles.infoValue}>{user.email}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <View style={[styles.infoField, styles.infoHalf]}>
-                    <Text style={styles.infoLabel}>Telefone</Text>
-                    <Text style={styles.infoValue}>{user.phone}</Text>
-                  </View>
-                  <View style={[styles.infoField, styles.infoHalf]}>
-                    <Text style={styles.infoLabel}>{user.docType}</Text>
-                    <Text style={styles.infoValue}>
-                      {formatDoc(user.personDoc, user.docType)}
-                    </Text>
-                  </View>
-                </View>
+                {editing ? (
+                  <>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>Nome</Text>
+                        <TextInput
+                          style={[styles.infoValue, { borderBottomWidth: 1, borderColor: AgreGreen.inputBorder, paddingVertical: 4 }]}
+                          value={editForm.firstName}
+                          onChangeText={(v) => setEditForm(f => ({ ...f, firstName: v }))}
+                        />
+                      </View>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>Sobrenome</Text>
+                        <TextInput
+                          style={[styles.infoValue, { borderBottomWidth: 1, borderColor: AgreGreen.inputBorder, paddingVertical: 4 }]}
+                          value={editForm.lastName}
+                          onChangeText={(v) => setEditForm(f => ({ ...f, lastName: v }))}
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>Telefone</Text>
+                        <TextInput
+                          style={[styles.infoValue, { borderBottomWidth: 1, borderColor: AgreGreen.inputBorder, paddingVertical: 4 }]}
+                          value={editForm.phone}
+                          onChangeText={(v) => setEditForm(f => ({ ...f, phone: v }))}
+                          keyboardType="phone-pad"
+                        />
+                      </View>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>{editForm.docType}</Text>
+                        <TextInput
+                          style={[styles.infoValue, { borderBottomWidth: 1, borderColor: AgreGreen.inputBorder, paddingVertical: 4 }]}
+                          value={editForm.personDoc}
+                          onChangeText={(v) => setEditForm(f => ({ ...f, personDoc: v }))}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>Nome Completo</Text>
+                        <Text style={styles.infoValue}>
+                          {user.firstName} {user.lastName}
+                        </Text>
+                      </View>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>Email</Text>
+                        <Text style={styles.infoValue}>{user.email}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>Telefone</Text>
+                        <Text style={styles.infoValue}>{user.phone}</Text>
+                      </View>
+                      <View style={[styles.infoField, styles.infoHalf]}>
+                        <Text style={styles.infoLabel}>{user.docType}</Text>
+                        <Text style={styles.infoValue}>
+                          {formatDoc(user.personDoc, user.docType)}
+                        </Text>
+                      </View>
+                    </View>
+                  </>
+                )}
               </View>
 
               {/* Localizacao */}
@@ -321,14 +384,40 @@ export default function ProfileScreen() {
 
               {/* Actions */}
               <View style={styles.sectionCard}>
-                <Pressable style={styles.dangerBtn}>
+                <Pressable style={styles.dangerBtn} onPress={() => {
+                  Alert.alert('Sair', 'Deseja realmente sair?', [
+                    { text: 'Cancelar', style: 'cancel' },
+                    { text: 'Sair', style: 'destructive', onPress: async () => {
+                      await signOut();
+                      router.replace('/auth/login');
+                    }},
+                  ]);
+                }}>
                   <Ionicons name="log-out-outline" size={18} color="#E53E3E" />
                   <Text style={styles.dangerBtnText}>Sair da Conta</Text>
                 </Pressable>
               </View>
 
               <View style={styles.sectionCard}>
-                <Pressable style={styles.deletBtn}>
+                <Pressable style={styles.deletBtn} onPress={() => {
+                  Alert.alert(
+                    'Deletar Conta',
+                    'Essa ação é irreversível. Deseja realmente deletar sua conta?',
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      { text: 'Deletar', style: 'destructive', onPress: async () => {
+                        try {
+                          await api.delete(`/api/users/${userId}`);
+                          if (auth.currentUser) await auth.currentUser.delete();
+                          await signOut();
+                          router.replace('/auth/login');
+                        } catch (e: any) {
+                          Alert.alert('Erro', e.message);
+                        }
+                      }},
+                    ],
+                  );
+                }}>
                   <Ionicons name="trash-outline" size={18} color="#E53E3E" />
                   <Text style={styles.dangerBtnText}>Deletar Conta</Text>
                 </Pressable>

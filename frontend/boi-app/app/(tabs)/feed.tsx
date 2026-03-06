@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/feed/feed.styles';
-
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE;
+import { api } from '@/lib/api';
 
 /* ── Known dropdown values ── */
 const BREEDS = ['Nelore', 'Angus', 'Brahman', 'Hereford', 'Senepol', 'Gir', 'Guzerá', 'Tabapuã'];
@@ -50,8 +50,7 @@ export default function FeedScreen() {
 
   /* ── fetch all active listings ── */
   useEffect(() => {
-    fetch(`${API_BASE}/api/listings?status=ACTIVE&size=100`)
-      .then((r) => r.json())
+    api.get<{ content: any[] }>('/api/listings?status=ACTIVE&size=100')
       .then((data) => setListings(data.content ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -272,7 +271,7 @@ export default function FeedScreen() {
             <Text style={styles.headerBrand}>Agregis</Text>
           </View>
         </View>
-        <Pressable style={styles.createBtn}>
+        <Pressable style={styles.createBtn} onPress={() => router.push('/listing/create')}>
           <Ionicons name="add" size={16} color="#fff" />
           <Text style={styles.createBtnText}>Criar Anuncio</Text>
         </Pressable>
