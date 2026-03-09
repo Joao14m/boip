@@ -8,6 +8,18 @@ import { Platform } from 'react-native';
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
+export const AgreGreen = {
+  brand:       '#52B788', // medium-light green — primary
+  button:      '#40916C', // CTA buttons
+  dark:        '#2D6A4F', // titles, deep accents
+  header:      '#B7E4C7', // top section background
+  pale:        '#EAF5ED', // very light tint
+  inputBg:     '#F0FAF3', // input field background
+  inputBorder: '#C4DEC9', // input border
+  muted:       '#5A7A65', // secondary text
+  placeholder: '#9DBFAB', // placeholder text
+};
+
 export const Colors = {
   light: {
     text: '#11181C',
