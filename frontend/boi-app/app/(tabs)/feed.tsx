@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,11 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/feed/feed.styles';
 import { api } from '@/lib/api';
@@ -48,13 +49,16 @@ export default function FeedScreen() {
   /* ── dropdown open state ── */
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  /* ── fetch all active listings ── */
-  useEffect(() => {
-    api.get<{ content: any[] }>('/api/listings?status=ACTIVE&size=100')
-      .then((data) => setListings(data.content ?? []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  /* ── fetch all active listings (re-runs on screen focus) ── */
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      api.get<{ content: any[] }>('/api/listings?status=ACTIVE&size=100')
+        .then((data) => setListings(data.content ?? []))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }, [])
+  );
 
   /* ── count active filters ── */
   const activeFilterCount = useMemo(() => {
@@ -101,7 +105,7 @@ export default function FeedScreen() {
 
       return true;
     });
-  }, [listings, search, breed, purpose, uf, priceMin, priceMax, weightMin, weightMax]);
+  }, [listings, search, breed, purpose, priceMin, priceMax, weightMin, weightMax]);
 
   /* ── clear all filters ── */
   const clearFilters = useCallback(() => {
@@ -196,10 +200,15 @@ export default function FeedScreen() {
   /* ── listing card ── */
   const renderCard = ({ item }: { item: any }) => {
     const lot = item.lotSummary;
+    const firstImage = item.media?.find((m: any) => m.mediaSlot === 0)?.mediaKey ?? null;
     return (
       <View style={styles.card}>
         <View style={styles.cardImagePlaceholder}>
-          <Ionicons name="image-outline" size={40} color="#BBB" />
+          {firstImage ? (
+            <Image source={{ uri: firstImage }} style={{ width: '100%', height: '100%', borderTopLeftRadius: 14, borderTopRightRadius: 14 }} resizeMode="cover" />
+          ) : (
+            <Ionicons name="image-outline" size={40} color="#BBB" />
+          )}
           {lot?.purpose && (
             <View style={styles.purposeBadge}>
               <Text style={styles.purposeBadgeText}>{lot.purpose}</Text>

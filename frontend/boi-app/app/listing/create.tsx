@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,20 +8,39 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { AgreGreen } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { uploadImage } from '@/lib/upload';
 
 const BREEDS = ['Nelore', 'Angus', 'Brahman', 'Hereford', 'Senepol', 'Gir', 'Guzerá', 'Tabapuã'];
-const PURPOSES = ['Corte', 'Leite', 'Reprodução'];
-const SEXES = ['Macho', 'Fêmea', 'Misto'];
+const PURPOSES = [
+  { label: 'Corte', value: 'BEEF' },
+  { label: 'Leite', value: 'DAIRY' },
+  { label: 'Reprodução', value: 'BREEDING' },
+];
+const SEXES = [
+  { label: 'Macho', value: 'M' },
+  { label: 'Fêmea', value: 'F' },
+  { label: 'Misto', value: 'MIXED' },
+];
 
 export default function CreateListingScreen() {
   const { userId } = useAuth();
+  const [userLocationId, setUserLocationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    api.get<any>(`/api/users/${userId}`)
+      .then((data) => setUserLocationId(data.locationId))
+      .catch(console.error);
+  }, [userId]);
 
   // Lot fields
   const [lotCode, setLotCode] = useState('');
@@ -39,11 +58,35 @@ export default function CreateListingScreen() {
   const [priceType, setPriceType] = useState<'PER_HEAD' | 'TOTAL'>('TOTAL');
   const [priceAmount, setPriceAmount] = useState('');
 
+  // Images (up to 3)
+  const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const handleCreate = async () => {
+  const pickImage = async () => {
+    if (images.length >= 3) {
+      Alert.alert('Limite', 'Máximo de 3 imagens.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setImages(prev => [...prev, result.assets[0].uri]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const buildAndSubmit = async (publish: boolean) => {
     if (!lotCode || !headCount || !priceAmount) {
       Alert.alert('Erro', 'Preencha código do lote, quantidade e preço.');
+      return;
+    }
+    if (images.length === 0) {
+      Alert.alert('Erro', 'Adicione pelo menos uma foto.');
       return;
     }
 
@@ -55,7 +98,7 @@ export default function CreateListingScreen() {
         ownerUserId: userId,
         lotCode,
         headCount: Number(headCount),
-        locationId: null,
+        locationId: userLocationId,
       });
 
       // 2. Create lot profile
@@ -68,24 +111,30 @@ export default function CreateListingScreen() {
         description: description || null,
       });
 
-      // 3. Create listing (with placeholder media)
+      // 3. Upload images to Firebase Storage
+      const media = [];
+      for (let i = 0; i < images.length; i++) {
+        const path = `listings/${userId}/${lot.id}/${i}.jpg`;
+        const url = await uploadImage(images[i], path);
+        media.push({ mediaSlot: i, mediaType: 'IMAGE', mediaKey: url, contentType: 'image/jpeg' });
+      }
+
+      // 4. Create listing
       const listing = await api.post<any>('/api/listings', {
         lotId: lot.id,
         sellerUserId: userId,
         priceType,
         priceAmount: Number(priceAmount),
         currency: 'BRL',
-        media: [
-          { mediaSlot: 0, mediaType: 'IMAGE', mediaKey: 'placeholder.jpg', contentType: 'image/jpeg' },
-        ],
+        media,
       });
 
-      // 4. Activate listing
-      await api.patch(`/api/listings/${listing.id}/status`, { status: 'ACTIVE' });
+      // 5. Activate if publishing
+      if (publish) {
+        await api.patch(`/api/listings/${listing.id}/status`, { status: 'ACTIVE' });
+      }
 
-      Alert.alert('Sucesso', 'Anuncio criado!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      router.back();
     } catch (e: any) {
       Alert.alert('Erro ao criar anuncio', e.message);
     } finally {
@@ -173,8 +222,8 @@ export default function CreateListingScreen() {
             <Text style={labelStyle}>Sexo</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {SEXES.map(s => (
-                <Pressable key={s} style={chipStyle(sex === s)} onPress={() => setSex(sex === s ? '' : s)}>
-                  <Text style={chipText(sex === s)}>{s}</Text>
+                <Pressable key={s.value} style={chipStyle(sex === s.value)} onPress={() => setSex(sex === s.value ? '' : s.value)}>
+                  <Text style={chipText(sex === s.value)}>{s.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -184,8 +233,8 @@ export default function CreateListingScreen() {
             <Text style={labelStyle}>Finalidade</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {PURPOSES.map(p => (
-                <Pressable key={p} style={chipStyle(purpose === p)} onPress={() => setPurpose(purpose === p ? '' : p)}>
-                  <Text style={chipText(purpose === p)}>{p}</Text>
+                <Pressable key={p.value} style={chipStyle(purpose === p.value)} onPress={() => setPurpose(purpose === p.value ? '' : p.value)}>
+                  <Text style={chipText(purpose === p.value)}>{p.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -214,6 +263,34 @@ export default function CreateListingScreen() {
             />
           </View>
 
+          {/* ── Fotos ── */}
+          <Text style={{ fontSize: 18, fontWeight: '700', color: AgreGreen.dark, marginTop: 8, marginBottom: 16 }}>
+            Fotos
+          </Text>
+
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+            {images.map((uri, i) => (
+              <View key={i} style={{ position: 'relative' }}>
+                <Image source={{ uri }} style={{ width: 100, height: 100, borderRadius: 10 }} />
+                <Pressable
+                  onPress={() => removeImage(i)}
+                  style={{ position: 'absolute', top: -6, right: -6, backgroundColor: '#E53E3E', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Ionicons name="close" size={14} color="#fff" />
+                </Pressable>
+              </View>
+            ))}
+            {images.length < 3 && (
+              <Pressable
+                onPress={pickImage}
+                style={{ width: 100, height: 100, borderRadius: 10, borderWidth: 2, borderColor: AgreGreen.inputBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: AgreGreen.inputBg }}
+              >
+                <Ionicons name="camera-outline" size={28} color={AgreGreen.muted} />
+                <Text style={{ color: AgreGreen.muted, fontSize: 11, marginTop: 4 }}>{images.length}/3</Text>
+              </Pressable>
+            )}
+          </View>
+
           {/* ── Preço ── */}
           <Text style={{ fontSize: 18, fontWeight: '700', color: AgreGreen.dark, marginTop: 8, marginBottom: 16 }}>
             Preço
@@ -237,21 +314,40 @@ export default function CreateListingScreen() {
           </View>
 
           {/* ── Submit ── */}
-          <Pressable
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? AgreGreen.dark : AgreGreen.button,
-              borderRadius: 12,
-              paddingVertical: 16,
-              alignItems: 'center' as const,
-              opacity: loading ? 0.6 : 1,
-            })}
-            onPress={handleCreate}
-            disabled={loading}
-          >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
-              {loading ? 'Criando...' : 'Criar Anuncio'}
-            </Text>
-          </Pressable>
+          <View style={{ gap: 10 }}>
+            <Pressable
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? AgreGreen.dark : AgreGreen.button,
+                borderRadius: 12,
+                paddingVertical: 16,
+                alignItems: 'center' as const,
+                opacity: loading ? 0.6 : 1,
+              })}
+              onPress={() => buildAndSubmit(true)}
+              disabled={loading}
+            >
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+                {loading ? 'Criando...' : 'Publicar Anuncio'}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? '#e8e8e8' : AgreGreen.inputBg,
+                borderRadius: 12,
+                paddingVertical: 16,
+                alignItems: 'center' as const,
+                borderWidth: 1,
+                borderColor: AgreGreen.inputBorder,
+                opacity: loading ? 0.6 : 1,
+              })}
+              onPress={() => buildAndSubmit(false)}
+              disabled={loading}
+            >
+              <Text style={{ color: AgreGreen.dark, fontSize: 16, fontWeight: '600' }}>
+                Salvar Rascunho
+              </Text>
+            </Pressable>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

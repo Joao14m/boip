@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,25 +14,22 @@ import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/my-lots/my-lots.styles';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { useFocusEffect } from 'expo-router';
 
 type SubTab = 'favoritos' | 'meus';
 
-const STATUS_FILTERS = ['Todos', 'DRAFT', 'PAUSED', 'SOLD', 'CANCELLED'] as const;
+const STATUS_FILTERS = ['Todos', 'ACTIVE', 'DRAFT', 'PAUSED', 'SOLD', 'CANCELLED'] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
 
 /* ── helper: status badge color ── */
 function statusColor(status: string) {
   switch (status) {
-    case 'DRAFT':
-      return { bg: '#FFF8E1', text: '#B8860B' };
-    case 'PAUSED':
-      return { bg: '#FFF3E0', text: '#E65100' };
-    case 'SOLD':
-      return { bg: '#E3F2FD', text: '#1565C0' };
-    case 'CANCELLED':
-      return { bg: '#FFEBEE', text: '#C62828' };
-    default:
-      return { bg: '#F5F5F5', text: '#555' };
+    case 'ACTIVE':    return { bg: '#E8F5E9', text: '#2E7D32' };
+    case 'DRAFT':     return { bg: '#FFF8E1', text: '#B8860B' };
+    case 'PAUSED':    return { bg: '#FFF3E0', text: '#E65100' };
+    case 'SOLD':      return { bg: '#E3F2FD', text: '#1565C0' };
+    case 'CANCELLED': return { bg: '#FFEBEE', text: '#C62828' };
+    default:          return { bg: '#F5F5F5', text: '#555' };
   }
 }
 
@@ -44,16 +42,12 @@ function formatPrice(amount: number, currency: string) {
 /* ── helper: translate status ── */
 function translateStatus(status: string) {
   switch (status) {
-    case 'DRAFT':
-      return 'Rascunho';
-    case 'PAUSED':
-      return 'Pausado';
-    case 'SOLD':
-      return 'Vendido';
-    case 'CANCELLED':
-      return 'Cancelado';
-    default:
-      return status;
+    case 'ACTIVE':    return 'Ativo';
+    case 'DRAFT':     return 'Rascunho';
+    case 'PAUSED':    return 'Pausado';
+    case 'SOLD':      return 'Vendido';
+    case 'CANCELLED': return 'Cancelado';
+    default:          return status;
   }
 }
 
@@ -67,23 +61,21 @@ export default function MyLotsScreen() {
   const [loadingMy, setLoadingMy] = useState(true);
   const [loadingFav, setLoadingFav] = useState(true);
 
-  /* ── fetch user's non-active listings (draft, paused, sold, cancelled) ── */
-  useEffect(() => {
-    if (!userId) {
-      setLoadingMy(false);
-      setMyListings([]);
-      return;
-    }
-    api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&size=50`)
-      .then((data) => {
-        const nonActive = (data.content ?? []).filter(
-          (l: any) => l.status !== 'ACTIVE'
-        );
-        setMyListings(nonActive);
-      })
-      .catch(console.error)
-      .finally(() => setLoadingMy(false));
-  }, [userId]);
+  /* ── fetch user's listings (re-runs on screen focus) ── */
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) {
+        setLoadingMy(false);
+        setMyListings([]);
+        return;
+      }
+      setLoadingMy(true);
+      api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&size=50`)
+        .then((data) => setMyListings(data.content ?? []))
+        .catch(console.error)
+        .finally(() => setLoadingMy(false));
+    }, [userId])
+  );
 
   /* ── fetch favorites ── */
   useEffect(() => {
@@ -102,11 +94,15 @@ export default function MyLotsScreen() {
   const renderCard = ({ item }: { item: any }) => {
     const lot = item.lotSummary;
     const sc = statusColor(item.status);
+    const firstImage = item.media?.find((m: any) => m.mediaSlot === 0)?.mediaKey ?? null;
     return (
       <View style={styles.card}>
-        {/* Image placeholder */}
         <View style={styles.cardImagePlaceholder}>
-          <Ionicons name="image-outline" size={40} color="#BBB" />
+          {firstImage ? (
+            <Image source={{ uri: firstImage }} style={{ width: '100%', height: '100%', borderTopLeftRadius: 14, borderTopRightRadius: 14 }} resizeMode="cover" />
+          ) : (
+            <Ionicons name="image-outline" size={40} color="#BBB" />
+          )}
           {lot?.purpose && (
             <View style={styles.purposeBadge}>
               <Text style={styles.purposeBadgeText}>{lot.purpose}</Text>
