@@ -403,6 +403,26 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
+              {/* Dados Bancarios */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <View>
+                    <Text style={styles.sectionTitle}>Dados para Recebimento</Text>
+                    <Text style={styles.sectionSubtitle}>PIX ou TED para receber pagamentos</Text>
+                  </View>
+                </View>
+                <Pressable
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}
+                  onPress={() => router.push('/payout-info')}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Ionicons name="card-outline" size={18} color={AgreGreen.brand} />
+                    <Text style={{ fontSize: 14, color: '#1B2D24' }}>Gerenciar dados bancários</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#CCC" />
+                </Pressable>
+              </View>
+
               {/* Actions */}
               <View style={styles.sectionCard}>
                 <Pressable style={styles.dangerBtn} onPress={() => {

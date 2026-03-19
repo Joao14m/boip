@@ -351,6 +351,24 @@ export const styles = StyleSheet.create({
     color: AgreGreen.muted,
   },
 
+  /* ── Buy Button ── */
+  buyBtn: {
+    marginTop: 12,
+    backgroundColor: AgreGreen.button,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buyBtnDisabled: {
+    opacity: 0.6,
+  },
+  buyBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
   /* ── Empty / Loading ── */
   emptyContainer: {
     alignItems: 'center',
