@@ -52,7 +52,7 @@ public class PaymentService {
         // We return to the frontend so the buyer can actually pay
         PaymentSaveRequestDto request = PaymentSaveRequestDto.builder()
             .customer(buyer.getAsaasCustomerId())
-            .billingType(PaymentSaveRequestBillingType.UNDEFINED)
+            .billingType(PaymentSaveRequestBillingType.PIX)
             .value(listing.getPriceAmount().doubleValue())
             .dueDate(LocalDate.now().plusDays(3).toString())
             .externalReference(listingId.toString())

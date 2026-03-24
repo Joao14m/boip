@@ -120,10 +120,9 @@ export default function FeedScreen() {
     setBuyingId(listingId);
     try {
       const charge = await api.post<any>(`/api/payments/${listingId}`, {});
-      const pixKey = charge?.pixTransaction?.qrCode?.payload ?? '';
       router.push({
         pathname: '/payment/[chargeId]',
-        params: { chargeId: charge.id, pixKey, listingId },
+        params: { chargeId: charge.id, listingId },
       });
     } catch (e: any) {
       Alert.alert('Erro', e.message ?? 'Não foi possível iniciar o pagamento.');

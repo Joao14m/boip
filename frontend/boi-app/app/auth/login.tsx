@@ -32,7 +32,9 @@ export default function LoginScreen() {
     }
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const token = await cred.user.getIdToken();
+      console.log('🔑 Firebase ID Token:', token);
       router.replace('/(tabs)/feed');
     } catch (e: any) {
       Alert.alert('Erro ao entrar', e.message);

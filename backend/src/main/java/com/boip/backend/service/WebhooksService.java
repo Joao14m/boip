@@ -48,7 +48,6 @@ public class WebhooksService {
             .name("Agregis Payments")
             .url(webhookUrl)
             .enabled(true)
-            .apiVersion(3L)
             .events(List.of(WebhookConfigSaveRequestWebhookEvent.PAYMENT_CONFIRMED))
             .sendType(WebhookConfigSaveRequestWebhookSendType.NON_SEQUENTIALLY)
             .build();

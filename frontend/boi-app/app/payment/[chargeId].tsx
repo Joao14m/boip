@@ -15,15 +15,26 @@ import { AgreGreen } from '@/constants/theme';
 import { api } from '@/lib/api';
 
 export default function PaymentScreen() {
-  const { chargeId, pixKey, listingId } = useLocalSearchParams<{
+  const { chargeId, listingId } = useLocalSearchParams<{
     chargeId: string;
-    pixKey: string;
     listingId: string;
   }>();
 
+  const [pixKey, setPixKey] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [copied, setCopied] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /* ── fetch PIX payload from billing info ── */
+  useEffect(() => {
+    if (!chargeId) return;
+    api.get<any>(`/api/payments/${chargeId}`)
+      .then((billing) => {
+        const payload = billing?.pix?.payload ?? '';
+        setPixKey(payload);
+      })
+      .catch(() => {});
+  }, [chargeId]);
 
   /* ── poll listing status every 4s ── */
   useEffect(() => {
