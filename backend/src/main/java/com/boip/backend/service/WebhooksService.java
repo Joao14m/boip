@@ -15,7 +15,9 @@ import com.asaas.apisdk.models.TransferBankSaveRequestDto;
 import com.asaas.apisdk.models.TransferSaveRequestDto;
 import com.asaas.apisdk.models.TransferSaveRequestPixAddressKeyType;
 import com.asaas.apisdk.models.TransferSaveRequestTransferType;
+import com.asaas.apisdk.models.WebhookConfigDeleteResponseDto;
 import com.asaas.apisdk.models.WebhookConfigGetResponseDto;
+import com.asaas.apisdk.models.WebhookConfigListResponseDto;
 import com.asaas.apisdk.models.WebhookConfigSaveRequestDto;
 import com.asaas.apisdk.models.WebhookConfigSaveRequestWebhookEvent;
 import com.asaas.apisdk.models.WebhookConfigSaveRequestWebhookSendType;
@@ -43,20 +45,38 @@ public class WebhooksService {
     @Value("${app.webhook-url}")
     private String webhookUrl;
 
+    @Value("${app.webhook-auth-token}")
+    private String webhookAuthToken;
+
     public WebhookConfigGetResponseDto registerWebhook() {
         WebhookConfigSaveRequestDto request = WebhookConfigSaveRequestDto.builder()
             .name("Agregis Payments")
             .url(webhookUrl)
+            .email("ageris.contato@gmail.com")
             .enabled(true)
-            .events(List.of(WebhookConfigSaveRequestWebhookEvent.PAYMENT_CONFIRMED))
+            .interrupted(false)
+            .authToken(webhookAuthToken)
+            .events(List.of(
+                WebhookConfigSaveRequestWebhookEvent.PAYMENT_CONFIRMED,
+                WebhookConfigSaveRequestWebhookEvent.PAYMENT_RECEIVED
+            ))
             .sendType(WebhookConfigSaveRequestWebhookSendType.NON_SEQUENTIALLY)
             .build();
 
         return asaasSdk.webhook.createNewWebhook(request);
     }
 
+    public WebhookConfigListResponseDto listWebhooks() {
+        return asaasSdk.webhook.listWebhooks();
+    }
+
+    public WebhookConfigDeleteResponseDto deleteWebhook(String webhookId) {
+        return asaasSdk.webhook.removeWebhook(webhookId);
+    }
+
     public void handleEvent(AsaasPaymentEventDto event) {
-        if (!"PAYMENT_CONFIRMED".equals(event.getEvent())) return;
+        String eventType = event.getEvent();
+        if (!"PAYMENT_CONFIRMED".equals(eventType) && !"PAYMENT_RECEIVED".equals(eventType)) return;
 
         AsaasPaymentEventDto.Payment payment = event.getPayment();
         UUID listingId = UUID.fromString(payment.getExternalReference());

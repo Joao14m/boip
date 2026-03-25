@@ -33,7 +33,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/customer").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/customer/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payments/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/webhooks/**").permitAll()
+                        .requestMatchers("/api/webhooks/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
