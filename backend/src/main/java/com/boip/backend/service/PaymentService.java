@@ -19,7 +19,9 @@ import com.boip.backend.repository.AppUserRepository;
 import com.boip.backend.repository.ListingRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -35,30 +37,48 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Listing is not active");
         }
 
-        if (buyer.getAsaasCustomerId() == null) {
-            CustomerSaveRequestDto customerRequest = CustomerSaveRequestDto.builder()
-                .name(buyer.getFirstName() + " " + buyer.getLastName())
-                .email(buyer.getEmail())
-                .mobilePhone(buyer.getPhone())
-                .cpfCnpj(buyer.getPersonDoc())
+        try {
+            if (buyer.getAsaasCustomerId() == null) {
+                CustomerSaveRequestDto customerRequest = CustomerSaveRequestDto.builder()
+                    .name(buyer.getFirstName() + " " + buyer.getLastName())
+                    .email(buyer.getEmail())
+                    .mobilePhone(buyer.getPhone())
+                    .cpfCnpj(buyer.getPersonDoc())
+                    .build();
+
+                log.info("Creating Asaas customer: name={}, email={}, phone={}, cpfCnpj={}",
+                    customerRequest.getName(), customerRequest.getEmail(),
+                    customerRequest.getMobilePhone(), customerRequest.getCpfCnpj());
+
+                String asaasId = asaasSdk.customer.createNewCustomer(customerRequest).getId();
+                buyer.setAsaasCustomerId(asaasId);
+                appUserRepository.save(buyer);
+            }
+
+            PaymentSaveRequestDto request = PaymentSaveRequestDto.builder()
+                .customer(buyer.getAsaasCustomerId())
+                .billingType(PaymentSaveRequestBillingType.PIX)
+                .value(listing.getPriceAmount().doubleValue())
+                .dueDate(LocalDate.now().plusDays(3).toString())
+                .externalReference(listingId.toString())
                 .build();
 
-            String asaasId = asaasSdk.customer.createNewCustomer(customerRequest).getId();
-            buyer.setAsaasCustomerId(asaasId);
-            appUserRepository.save(buyer);
+            log.info("Creating Asaas payment: customer={}, value={}, dueDate={}, externalRef={}",
+                request.getCustomer(), request.getValue(), request.getDueDate(), request.getExternalReference());
+
+            return asaasSdk.payment.createNewPayment(request);
+        } catch (com.asaas.apisdk.exceptions.ErrorResponseDtoException e) {
+            var errors = e.getError().getErrors();
+            if (errors != null) {
+                for (var item : errors) {
+                    log.error("Asaas error: code={}, description={}", item.getCode(), item.getDescription());
+                }
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Payment provider error: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Asaas API failed: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Payment provider error: " + e.getMessage(), e);
         }
-
-        // It will contain the payment link or PIX code
-        // We return to the frontend so the buyer can actually pay
-        PaymentSaveRequestDto request = PaymentSaveRequestDto.builder()
-            .customer(buyer.getAsaasCustomerId())
-            .billingType(PaymentSaveRequestBillingType.PIX)
-            .value(listing.getPriceAmount().doubleValue())
-            .dueDate(LocalDate.now().plusDays(3).toString())
-            .externalReference(listingId.toString())
-            .build();
-
-        return asaasSdk.payment.createNewPayment(request);
     }
 
     public PaymentBillingInfoResponseDto retrieveBilling(String chargeId){
