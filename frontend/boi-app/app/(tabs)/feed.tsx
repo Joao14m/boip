@@ -7,6 +7,7 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  Alert,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/feed/feed.styles';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 /* ── Known dropdown values ── */
 const BREEDS = ['Nelore', 'Angus', 'Brahman', 'Hereford', 'Senepol', 'Gir', 'Guzerá', 'Tabapuã'];
@@ -32,8 +34,10 @@ function formatPrice(amount: number, currency: string) {
 
 /* ══════════════════════════════════════════════ */
 export default function FeedScreen() {
+  const { userId } = useAuth();
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [buyingId, setBuyingId] = useState<string | null>(null);
 
   /* ── filter state ── */
   const [showFilters, setShowFilters] = useState(false);
@@ -106,6 +110,26 @@ export default function FeedScreen() {
       return true;
     });
   }, [listings, search, breed, purpose, priceMin, priceMax, weightMin, weightMax]);
+
+  /* ── buy handler ── */
+  const handleBuy = useCallback(async (listingId: string) => {
+    if (!userId) {
+      Alert.alert('Erro', 'Você precisa estar logado para comprar.');
+      return;
+    }
+    setBuyingId(listingId);
+    try {
+      const charge = await api.post<any>(`/api/payments/${listingId}`, {});
+      router.push({
+        pathname: '/payment/[chargeId]',
+        params: { chargeId: charge.id, listingId },
+      });
+    } catch (e: any) {
+      Alert.alert('Erro', e.message ?? 'Não foi possível iniciar o pagamento.');
+    } finally {
+      setBuyingId(null);
+    }
+  }, [userId]);
 
   /* ── clear all filters ── */
   const clearFilters = useCallback(() => {
@@ -264,6 +288,17 @@ export default function FeedScreen() {
               </View>
             )}
           </View>
+
+          <Pressable
+            style={[styles.buyBtn, buyingId === item.id && styles.buyBtnDisabled]}
+            onPress={() => handleBuy(item.id)}
+            disabled={buyingId === item.id}
+          >
+            {buyingId === item.id
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Text style={styles.buyBtnText}>Comprar</Text>
+            }
+          </Pressable>
         </View>
       </View>
     );
