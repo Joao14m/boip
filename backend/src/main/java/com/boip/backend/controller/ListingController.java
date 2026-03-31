@@ -69,7 +69,7 @@ public class ListingController {
     @ResponseStatus(HttpStatus.CREATED)
     public ListingMediaResponseDto addMedia(
             @PathVariable UUID id,
-            @RequestBody ListingMediaRequestDto req) {
+            @Valid @RequestBody ListingMediaRequestDto req) {
         req.setListingId(id);
         return listingService.addMedia(req, requireAppUser());
     }

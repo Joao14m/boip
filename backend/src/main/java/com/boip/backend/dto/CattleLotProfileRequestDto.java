@@ -2,6 +2,10 @@ package com.boip.backend.dto;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,11 +16,24 @@ import lombok.Setter;
 @Getter @Setter
 @Builder
 public class CattleLotProfileRequestDto {
+    @Size(max = 80)
     String breed;
+
+    @Pattern(regexp = "M|F|MIXED", message = "sex must be M, F or MIXED")
     String sex;
+
+    @Pattern(regexp = "BEEF|DAIRY|BREEDING|MIXED", message = "purpose must be BEEF, DAIRY, BREEDING or MIXED")
     String purpose;
+
+    @DecimalMin(value = "0.01", message = "avgWeightKg must be greater than 0")
     BigDecimal avgWeightKg;
+
+    @Min(value = 1, message = "avgAgeMonths must be at least 1")
     Integer avgAgeMonths;
+
+    @Min(value = 1900, message = "birthYear must be at least 1900")
     Integer birthYear;
+
+    @Size(max = 500)
     String description;
 }

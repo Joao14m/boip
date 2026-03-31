@@ -74,7 +74,7 @@ public class CattleController {
     @PostMapping("/{id}/profile")
     @ResponseStatus(HttpStatus.CREATED)
     public CattleLotProfileResponseDto createProfile(@PathVariable UUID id,
-                                                     @RequestBody CattleLotProfileRequestDto req) {
+                                                     @Valid @RequestBody CattleLotProfileRequestDto req) {
         return cattleService.createProfile(id, req, requireAppUser());
     }
 
