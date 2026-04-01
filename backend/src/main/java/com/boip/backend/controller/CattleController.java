@@ -12,7 +12,10 @@ import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.CattleService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/lots")
@@ -55,8 +59,8 @@ public class CattleController {
                                                 @RequestParam(required = false) String municipality,
                                                 @RequestParam(required = false) String sort,
                                                 @RequestParam(required = false) String direction,
-                                                @RequestParam(defaultValue = "0") int page,
-                                                @RequestParam(defaultValue = "20") int size) {
+                                                @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return cattleService.filter(locationId, uf, municipality, sort, direction, page, size);
     }
 

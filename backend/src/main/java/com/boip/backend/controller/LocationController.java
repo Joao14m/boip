@@ -18,7 +18,9 @@ import com.boip.backend.service.LocationService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/api/locations")
 @RequiredArgsConstructor

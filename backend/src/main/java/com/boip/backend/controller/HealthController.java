@@ -1,10 +1,12 @@
 package com.boip.backend.controller;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+@Validated
 @RestController
 public class HealthController {
 

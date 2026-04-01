@@ -12,6 +12,7 @@ import com.boip.backend.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 
+@Validated
 @RequestMapping("/api/users")
 @RestController
 @RequiredArgsConstructor

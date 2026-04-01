@@ -16,7 +16,9 @@ import com.boip.backend.service.AsaasCustomerService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/api/customer")
 @RequiredArgsConstructor
@@ -31,7 +33,7 @@ public class AsaasCustomerController {
 
     // Kinda unnecessary
     @PutMapping("/{id}")
-    public CustomerGetResponseDto updateAsaas(@PathVariable String id, @RequestBody CustomerUpdateRequestDto req){
+    public CustomerGetResponseDto updateAsaas(@PathVariable String id, @Valid @RequestBody CustomerUpdateRequestDto req){
         return asaasCustomerService.updateCustomer(id, req);
     }
 }

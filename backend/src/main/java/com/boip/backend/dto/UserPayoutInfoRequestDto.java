@@ -1,11 +1,13 @@
 package com.boip.backend.dto;
 
+import com.boip.backend.validation.ValidPayoutInfo;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter @Setter @NoArgsConstructor
+@ValidPayoutInfo
 public class UserPayoutInfoRequestDto {
 
     @NotBlank
