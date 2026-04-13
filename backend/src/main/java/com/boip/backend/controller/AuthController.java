@@ -8,10 +8,12 @@ import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+@Validated
 @RestController
 @RequestMapping("/auth")
 public class AuthController {

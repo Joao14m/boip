@@ -20,7 +20,8 @@ import { useAuth } from '@/context/AuthContext';
 
 /* ── Known dropdown values ── */
 const BREEDS = ['Nelore', 'Angus', 'Brahman', 'Hereford', 'Senepol', 'Gir', 'Guzerá', 'Tabapuã'];
-const PURPOSES = ['Corte', 'Leite', 'Reprodução'];
+const PURPOSES = ['Corte', 'Leite', 'Reprodução', 'Misto'];
+const SEX_LABEL: Record<string, string> = { M: 'Macho', F: 'Fêmea', MIXED: 'Misto' };
 const UFS = [
   'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
   'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO',
@@ -93,9 +94,7 @@ export default function FeedScreen() {
 
       if (breed && lot?.breed !== breed) return false;
       if (purpose && lot?.purpose !== purpose) return false;
-
-      // UF filter — requires location data on listing (not available yet)
-      // TODO: will work once backend returns location info in lotSummary
+      if (uf && lot?.uf !== uf) return false;
 
       // price range
       const price = item.priceAmount ?? 0;
@@ -109,7 +108,7 @@ export default function FeedScreen() {
 
       return true;
     });
-  }, [listings, search, breed, purpose, priceMin, priceMax, weightMin, weightMax]);
+  }, [listings, search, breed, purpose, uf, priceMin, priceMax, weightMin, weightMax]);
 
   /* ── buy handler ── */
   const handleBuy = useCallback(async (listingId: string) => {
@@ -262,7 +261,7 @@ export default function FeedScreen() {
               )}
               {lot.sex && (
                 <View style={styles.tag}>
-                  <Text style={styles.tagText}>{lot.sex}</Text>
+                  <Text style={styles.tagText}>{SEX_LABEL[lot.sex] ?? lot.sex}</Text>
                 </View>
               )}
             </View>

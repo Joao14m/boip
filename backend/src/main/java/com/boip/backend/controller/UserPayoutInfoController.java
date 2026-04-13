@@ -17,7 +17,9 @@ import com.boip.backend.service.UserPayoutInfoService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/api/users/{userId}/payout-info")
 @RequiredArgsConstructor

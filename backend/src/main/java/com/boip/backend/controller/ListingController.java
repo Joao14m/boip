@@ -1,7 +1,6 @@
 package com.boip.backend.controller;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -14,12 +13,17 @@ import com.boip.backend.dto.ListingMediaResponseDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.PageResponseDto;
+import com.boip.backend.dto.StatusUpdateRequestDto;
 import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.ListingService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/api/listings")
 @RequiredArgsConstructor
@@ -44,8 +48,8 @@ public class ListingController {
             @RequestParam(required = false) UUID sellerUserId,
             @RequestParam(required = false) UUID lotId,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         if (sellerUserId != null) return listingService.findBySeller(sellerUserId, page, size);
         if (lotId != null) return listingService.findByLot(lotId, page, size);
         String effectiveStatus = (status != null && !status.isBlank()) ? status.toUpperCase() : "ACTIVE";
@@ -55,8 +59,8 @@ public class ListingController {
     @PatchMapping("/{id}/status")
     public ListingResponseDto updateStatus(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body) {
-        return listingService.updateStatus(id, body.get("status"), requireAppUser());
+            @Valid @RequestBody StatusUpdateRequestDto body) {
+        return listingService.updateStatus(id, body.getStatus(), requireAppUser());
     }
 
     @DeleteMapping("/{id}")
@@ -69,7 +73,7 @@ public class ListingController {
     @ResponseStatus(HttpStatus.CREATED)
     public ListingMediaResponseDto addMedia(
             @PathVariable UUID id,
-            @RequestBody ListingMediaRequestDto req) {
+            @Valid @RequestBody ListingMediaRequestDto req) {
         req.setListingId(id);
         return listingService.addMedia(req, requireAppUser());
     }

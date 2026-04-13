@@ -1,6 +1,5 @@
 package com.boip.backend.service;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.boip.backend.dto.UserResponseDto;
-import com.boip.backend.dto.UserSignupRequestDto;
 import com.boip.backend.dto.UserUpdateRequestDto;
 import com.boip.backend.entity.AppUser;
 import com.boip.backend.mapper.UserMapper;
@@ -21,58 +19,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
     private final AppUserRepository usersRepository;
-
-    public UserResponseDto signup(String firebaseUid, UserSignupRequestDto req) {
-        String email = req.getEmail().trim();
-        String docType = req.getDocType().trim();
-        String personDoc = req.getPersonDoc().trim();
-        String carNumber = req.getCarNumber() == null ? null : req.getCarNumber().trim();
-
-        // business validation (same as DB checks, but better error messages)
-        if (docType.equals("CPF") && personDoc.length() != 11) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF must have 11 digits");
-        }
-        if (docType.equals("CNPJ") && personDoc.length() != 14) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNPJ must have 14 digits");
-        }
-        if (Boolean.TRUE.equals(req.getHasCar())) {
-            if (carNumber == null || carNumber.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "carNumber is required when hasCar is true");
-            }
-        } else {
-            carNumber = null;
-        }
-        if (usersRepository.existsByEmailIgnoreCase(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "email already exists");
-        }
-        if (usersRepository.existsByPersonDoc(personDoc)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "personDoc already exists");
-        }
-
-        OffsetDateTime now = OffsetDateTime.now();
-
-        AppUser userEntity = AppUser.builder()
-            .firebaseUid(firebaseUid)
-            .firstName(req.getFirstName())
-            .lastName(req.getLastName())
-            .email(email)
-            .phone(req.getPhone())
-            .personDoc(personDoc)
-            .docType(docType)
-            .hasCar(req.getHasCar())
-            .carNumber(carNumber)
-            .locationId(req.getLocationId())
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-
-        try {
-            AppUser saved = usersRepository.saveAndFlush(userEntity);
-            return UserMapper.toDto(saved);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data (check locationId / uniqueness)", e);
-        }
-    }
 
     public UserResponseDto readUser(UUID id) {
         AppUser userEntity = usersRepository.findById(id)

@@ -30,6 +30,7 @@ import com.boip.backend.repository.CattleLotProfileRepository;
 import com.boip.backend.repository.CattleLotRepository;
 import com.boip.backend.repository.ListingMediaRepository;
 import com.boip.backend.repository.ListingRepository;
+import com.boip.backend.repository.LocationRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,6 +45,7 @@ public class ListingService {
     private final ListingMediaRepository listingMediaRepository;
     private final CattleLotRepository cattleLotRepository;
     private final CattleLotProfileRepository cattleLotProfileRepository;
+    private final LocationRepository locationRepository;
 
     @Transactional
     public ListingResponseDto create(ListingRequestDto req) {
@@ -214,6 +216,10 @@ public class ListingService {
                 .findTopByLotIdOrderByProfileVersionDesc(lotId)
                 .orElse(null);
 
+        String uf = locationRepository.findById(lot.getLocationId())
+                .map(l -> l.getUf())
+                .orElse(null);
+
         return LotSummaryDto.builder()
                 .lotId(lot.getId())
                 .lotCode(lot.getLotCode())
@@ -223,6 +229,7 @@ public class ListingService {
                 .purpose(profile != null ? profile.getPurpose() : null)
                 .avgWeightKg(profile != null ? profile.getAvgWeightKg() : null)
                 .avgAgeMonths(profile != null ? profile.getAvgAgeMonths() : null)
+                .uf(uf)
                 .build();
     }
 }

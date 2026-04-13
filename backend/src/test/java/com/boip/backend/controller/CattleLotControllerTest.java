@@ -144,7 +144,7 @@ public class CattleLotControllerTest {
                                 {
                                   "breed": "Nelore",
                                   "sex": "M",
-                                  "purpose": "BEEF",
+                                  "purpose": "Corte",
                                   "avgWeightKg": 450.50,
                                   "avgAgeMonths": 24,
                                   "birthYear": 2022,
@@ -156,7 +156,7 @@ public class CattleLotControllerTest {
                 .andExpect(jsonPath("$.lotId").value(lotId))
                 .andExpect(jsonPath("$.breed").value("Nelore"))
                 .andExpect(jsonPath("$.sex").value("M"))
-                .andExpect(jsonPath("$.purpose").value("BEEF"));
+                .andExpect(jsonPath("$.purpose").value("Corte"));
 
         // 4) GET current profile → v1
         mvc.perform(get("/api/lots/{id}/profile", lotId))
@@ -171,7 +171,7 @@ public class CattleLotControllerTest {
                                 {
                                   "breed": "Angus",
                                   "sex": "MIXED",
-                                  "purpose": "DAIRY",
+                                  "purpose": "Leite",
                                   "avgWeightKg": 500.00,
                                   "avgAgeMonths": 30,
                                   "birthYear": 2021,

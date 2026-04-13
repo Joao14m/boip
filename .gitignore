@@ -1,3 +1,7 @@
+# Claude Code
+.claude/
+docs/
+
 # OS / IDE
 .DS_Store
 Thumbs.db

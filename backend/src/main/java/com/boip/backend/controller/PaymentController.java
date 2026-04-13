@@ -18,7 +18,9 @@ import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.PaymentService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor

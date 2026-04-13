@@ -20,7 +20,9 @@ import com.boip.backend.service.WebhooksService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @Slf4j
 @RestController
 @RequestMapping("/api/webhooks")
