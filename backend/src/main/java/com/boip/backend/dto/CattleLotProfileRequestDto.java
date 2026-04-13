@@ -27,7 +27,7 @@ public class CattleLotProfileRequestDto {
     String sex;
 
     @NotBlank
-    @Pattern(regexp = "BEEF|DAIRY|BREEDING|MIXED", message = "purpose must be BEEF, DAIRY, BREEDING or MIXED")
+    @Pattern(regexp = "Corte|Leite|Reprodução|Misto", message = "purpose must be Corte, Leite, Reprodução or Misto")
     String purpose;
 
     @NotNull

@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +13,7 @@ import { router } from 'expo-router';
 import { AgreGreen } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { FieldError } from '@/components/FieldError';
 
 const PIX_KEY_TYPES = ['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'EVP'];
 const ACCOUNT_TYPES = ['CONTA_CORRENTE', 'CONTA_POUPANCA'];
@@ -21,8 +21,29 @@ const ACCOUNT_TYPES = ['CONTA_CORRENTE', 'CONTA_POUPANCA'];
 export default function PayoutInfoScreen() {
   const { userId } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]   = useState(false);
   const [transferType, setTransferType] = useState<'PIX' | 'TED'>('PIX');
+
+  const [errors, setErrors]       = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const clearError = (field: string) =>
+    setErrors(prev => ({ ...prev, [field]: '' }));
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (transferType === 'PIX') {
+      if (!pixKey.trim()) e.pixKey = 'Chave PIX é obrigatória.';
+    } else {
+      if (!bankCode.trim())    e.bankCode    = 'Código do banco é obrigatório.';
+      if (!agency.trim())      e.agency      = 'Agência é obrigatória.';
+      if (!account.trim())     e.account     = 'Conta é obrigatória.';
+      if (!accountDigit.trim()) e.accountDigit = 'Dígito é obrigatório.';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   /* PIX fields */
   const [pixKey, setPixKey] = useState('');
@@ -57,6 +78,9 @@ export default function PayoutInfoScreen() {
 
   const handleSave = async () => {
     if (!userId) return;
+    setFormError('');
+    setSuccessMsg('');
+    if (!validate()) return;
     setSaving(true);
     try {
       await api.put(`/api/users/${userId}/payout-info`, {
@@ -70,10 +94,10 @@ export default function PayoutInfoScreen() {
         bankAccountType: transferType === 'TED' ? bankAccountType : null,
         ispb: transferType === 'TED' ? ispb || null : null,
       });
-      Alert.alert('Salvo', 'Dados bancários atualizados com sucesso.');
-      router.back();
+      setSuccessMsg('Dados bancários atualizados com sucesso.');
+      setTimeout(() => router.back(), 1200);
     } catch (e: any) {
-      Alert.alert('Erro', e.message ?? 'Não foi possível salvar.');
+      setFormError(e.message ?? 'Não foi possível salvar.');
     } finally {
       setSaving(false);
     }
@@ -99,6 +123,19 @@ export default function PayoutInfoScreen() {
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+        {formError ? (
+          <View style={{ backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7', borderRadius: 8, padding: 12 }}>
+            <Text style={{ color: '#C53030', fontSize: 13 }}>{formError}</Text>
+          </View>
+        ) : null}
+
+        {successMsg ? (
+          <View style={{ backgroundColor: '#F0FFF4', borderWidth: 1, borderColor: '#9AE6B4', borderRadius: 8, padding: 12 }}>
+            <Text style={{ color: '#276749', fontSize: 13 }}>{successMsg}</Text>
+          </View>
+        ) : null}
+
         {/* type toggle */}
         <View style={s.toggleRow}>
           <Pressable
@@ -136,30 +173,35 @@ export default function PayoutInfoScreen() {
             <TextInput
               style={s.input}
               value={pixKey}
-              onChangeText={setPixKey}
+              onChangeText={v => { setPixKey(v); clearError('pixKey'); }}
               placeholder="Ex: email@exemplo.com"
               placeholderTextColor={AgreGreen.placeholder}
               autoCapitalize="none"
             />
+            <FieldError message={errors.pixKey} />
           </View>
         ) : (
           <View style={s.card}>
             <Text style={s.cardTitle}>Dados Bancários (TED)</Text>
 
             <Text style={s.label}>Código do banco</Text>
-            <TextInput style={s.input} value={bankCode} onChangeText={setBankCode} placeholder="Ex: 237" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" />
+            <TextInput style={s.input} value={bankCode} onChangeText={v => { setBankCode(v); clearError('bankCode'); }} placeholder="Ex: 237" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" />
+            <FieldError message={errors.bankCode} />
 
             <Text style={s.label}>Agência (sem dígito)</Text>
-            <TextInput style={s.input} value={agency} onChangeText={setAgency} placeholder="Ex: 1263" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" />
+            <TextInput style={s.input} value={agency} onChangeText={v => { setAgency(v); clearError('agency'); }} placeholder="Ex: 1263" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" />
+            <FieldError message={errors.agency} />
 
             <View style={s.row}>
               <View style={s.flex}>
                 <Text style={s.label}>Conta (sem dígito)</Text>
-                <TextInput style={s.input} value={account} onChangeText={setAccount} placeholder="Ex: 9999991" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" />
+                <TextInput style={s.input} value={account} onChangeText={v => { setAccount(v); clearError('account'); }} placeholder="Ex: 9999991" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" />
+                <FieldError message={errors.account} />
               </View>
               <View style={s.digitField}>
                 <Text style={s.label}>Dígito</Text>
-                <TextInput style={s.input} value={accountDigit} onChangeText={setAccountDigit} placeholder="1" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" maxLength={2} />
+                <TextInput style={s.input} value={accountDigit} onChangeText={v => { setAccountDigit(v); clearError('accountDigit'); }} placeholder="1" placeholderTextColor={AgreGreen.placeholder} keyboardType="numeric" maxLength={2} />
+                <FieldError message={errors.accountDigit} />
               </View>
             </View>
 

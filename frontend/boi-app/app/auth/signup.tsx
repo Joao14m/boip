@@ -8,7 +8,6 @@ import {
   Platform,
   ScrollView,
   Switch,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -19,32 +18,32 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/signup.styles';
+import { FieldError } from '@/components/FieldError';
 
-type Location = {
-  id: string;
-  uf: string;
-  municipality: string;
-};
+type Location = { id: string; uf: string; municipality: string };
 
 export default function SignupScreen() {
   const { refreshMe } = useAuth();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [phone, setPhone] = useState('');
-  const [personDoc, setPersonDoc] = useState('');
-  const [docType, setDocType] = useState<'CPF' | 'CNPJ'>('CPF');
-  const [hasCar, setHasCar] = useState(false);
-  const [carNumber, setCarNumber] = useState('');
-  const [locationId, setLocationId] = useState('');
 
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [locationQuery, setLocationQuery] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [firstName, setFirstName]               = useState('');
+  const [lastName, setLastName]                 = useState('');
+  const [email, setEmail]                       = useState('');
+  const [password, setPassword]                 = useState('');
+  const [confirmPassword, setConfirmPassword]   = useState('');
+  const [showPassword, setShowPassword]         = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [phone, setPhone]                       = useState('');
+  const [personDoc, setPersonDoc]               = useState('');
+  const [docType, setDocType]                   = useState<'CPF' | 'CNPJ'>('CPF');
+  const [hasCar, setHasCar]                     = useState(false);
+  const [carNumber, setCarNumber]               = useState('');
+  const [locationId, setLocationId]             = useState('');
+  const [locations, setLocations]               = useState<Location[]>([]);
+  const [locationQuery, setLocationQuery]       = useState('');
+  const [loading, setLoading]                   = useState(false);
+
+  const [errors, setErrors]       = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     api.get<Location[]>('/api/locations').then(setLocations).catch(() => {});
@@ -61,32 +60,62 @@ export default function SignupScreen() {
 
   const selectedLocation = locations.find(l => l.id === locationId);
 
+  const clearError = (field: string) =>
+    setErrors(prev => ({ ...prev, [field]: '' }));
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+
+    if (!firstName.trim()) e.firstName = 'Nome é obrigatório.';
+    if (!lastName.trim())  e.lastName  = 'Sobrenome é obrigatório.';
+
+    if (!email.trim())          e.email = 'E-mail é obrigatório.';
+    else if (!email.includes('@')) e.email = 'E-mail inválido.';
+
+    if (!password)               e.password = 'Senha é obrigatória.';
+    else if (password.length < 6) e.password = 'Senha deve ter pelo menos 6 caracteres.';
+
+    if (!confirmPassword)              e.confirmPassword = 'Confirme a senha.';
+    else if (password !== confirmPassword) e.confirmPassword = 'As senhas não coincidem.';
+
+    if (!phone.trim()) e.phone = 'Telefone é obrigatório.';
+
+    if (!personDoc.trim())
+      e.personDoc = `${docType} é obrigatório.`;
+    else if (docType === 'CPF' && personDoc.replace(/\D/g, '').length !== 11)
+      e.personDoc = 'CPF deve ter 11 dígitos.';
+    else if (docType === 'CNPJ' && personDoc.replace(/\D/g, '').length !== 14)
+      e.personDoc = 'CNPJ deve ter 14 dígitos.';
+
+    if (hasCar && !carNumber.trim()) e.carNumber = 'Placa é obrigatória quando possui veículo.';
+
+    if (!locationId) e.locationId = 'Selecione uma localização.';
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSignup = async () => {
-    if (!firstName || !lastName || !email || !password || !phone || !personDoc || !locationId) {
-      Alert.alert('Erro', 'Preencha todos os campos obrigatórios.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
-      return;
-    }
+    setFormError('');
+    if (!validate()) return;
+
     try {
       setLoading(true);
-      await createUserWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email.trim(), password);
       await api.post('/auth/onboard', {
-        firstName,
-        lastName,
-        phone,
-        personDoc,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+        personDoc: personDoc.replace(/\D/g, ''),
         docType,
         hasCar,
-        carNumber: hasCar ? carNumber : null,
+        carNumber: hasCar ? carNumber.trim() : null,
         locationId,
       });
       await refreshMe();
       router.replace('/(tabs)/feed');
     } catch (e: any) {
-      Alert.alert('Erro ao criar conta', e.message);
+      setFormError(e.message ?? 'Não foi possível criar a conta. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -103,7 +132,6 @@ export default function SignupScreen() {
           <View style={styles.circle1} />
           <View style={styles.circle2} />
           <View style={styles.circle3} />
-
           <Text style={styles.headerBrand}>Agregis</Text>
           <Text style={styles.cattleEmoji}>🐄</Text>
         </View>
@@ -118,6 +146,13 @@ export default function SignupScreen() {
           <Text style={styles.welcome}>Criar conta</Text>
           <Text style={styles.subtitle}>Preencha os dados para se cadastrar</Text>
 
+          {/* Banner de erro do servidor */}
+          {formError ? (
+            <View style={{ backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+              <Text style={{ color: '#C53030', fontSize: 13 }}>{formError}</Text>
+            </View>
+          ) : null}
+
           {/* Nome + Sobrenome */}
           <View style={styles.row}>
             <View style={[styles.fieldGroup, styles.halfField]}>
@@ -128,10 +163,11 @@ export default function SignupScreen() {
                   placeholder="João"
                   placeholderTextColor={AgreGreen.placeholder}
                   value={firstName}
-                  onChangeText={setFirstName}
+                  onChangeText={v => { setFirstName(v); clearError('firstName'); }}
                   autoCapitalize="words"
                 />
               </View>
+              <FieldError message={errors.firstName} />
             </View>
             <View style={[styles.fieldGroup, styles.halfField]}>
               <Text style={styles.label}>Sobrenome</Text>
@@ -141,10 +177,11 @@ export default function SignupScreen() {
                   placeholder="Silva"
                   placeholderTextColor={AgreGreen.placeholder}
                   value={lastName}
-                  onChangeText={setLastName}
+                  onChangeText={v => { setLastName(v); clearError('lastName'); }}
                   autoCapitalize="words"
                 />
               </View>
+              <FieldError message={errors.lastName} />
             </View>
           </View>
 
@@ -158,12 +195,13 @@ export default function SignupScreen() {
                 placeholder="seu@email.com"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={v => { setEmail(v); clearError('email'); }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
               />
             </View>
+            <FieldError message={errors.email} />
           </View>
 
           {/* Senha */}
@@ -176,17 +214,14 @@ export default function SignupScreen() {
                 placeholder="Mínimo 6 caracteres"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={v => { setPassword(v); clearError('password'); }}
                 secureTextEntry={!showPassword}
               />
               <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
-                <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={AgreGreen.muted}
-                />
+                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.muted} />
               </Pressable>
             </View>
+            <FieldError message={errors.password} />
           </View>
 
           {/* Confirmar Senha */}
@@ -199,17 +234,14 @@ export default function SignupScreen() {
                 placeholder="Repita a senha"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={v => { setConfirmPassword(v); clearError('confirmPassword'); }}
                 secureTextEntry={!showConfirmPassword}
               />
               <Pressable onPress={() => setShowConfirmPassword(v => !v)} style={styles.eyeBtn}>
-                <Ionicons
-                  name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={AgreGreen.muted}
-                />
+                <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.muted} />
               </Pressable>
             </View>
+            <FieldError message={errors.confirmPassword} />
           </View>
 
           {/* Telefone */}
@@ -222,25 +254,26 @@ export default function SignupScreen() {
                 placeholder="(99) 99999-9999"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={v => { setPhone(v); clearError('phone'); }}
                 keyboardType="phone-pad"
               />
             </View>
+            <FieldError message={errors.phone} />
           </View>
 
-          {/* Tipo de documento CPF / CNPJ */}
+          {/* Tipo de documento */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Tipo de documento</Text>
             <View style={styles.toggleRow}>
               <Pressable
                 style={[styles.toggleBtn, docType === 'CPF' ? styles.toggleBtnActive : null]}
-                onPress={() => setDocType('CPF')}
+                onPress={() => { setDocType('CPF'); clearError('personDoc'); }}
               >
                 <Text style={[styles.toggleText, docType === 'CPF' ? styles.toggleTextActive : null]}>CPF</Text>
               </Pressable>
               <Pressable
                 style={[styles.toggleBtn, docType === 'CNPJ' ? styles.toggleBtnActive : null]}
-                onPress={() => setDocType('CNPJ')}
+                onPress={() => { setDocType('CNPJ'); clearError('personDoc'); }}
               >
                 <Text style={[styles.toggleText, docType === 'CNPJ' ? styles.toggleTextActive : null]}>CNPJ</Text>
               </Pressable>
@@ -257,10 +290,11 @@ export default function SignupScreen() {
                 placeholder={docType === 'CPF' ? '00000000000' : '00000000000000'}
                 placeholderTextColor={AgreGreen.placeholder}
                 value={personDoc}
-                onChangeText={setPersonDoc}
+                onChangeText={v => { setPersonDoc(v); clearError('personDoc'); }}
                 keyboardType="numeric"
               />
             </View>
+            <FieldError message={errors.personDoc} />
           </View>
 
           {/* Possui veículo */}
@@ -271,13 +305,13 @@ export default function SignupScreen() {
             </View>
             <Switch
               value={hasCar}
-              onValueChange={setHasCar}
+              onValueChange={v => { setHasCar(v); if (!v) clearError('carNumber'); }}
               trackColor={{ false: AgreGreen.inputBorder, true: AgreGreen.brand }}
               thumbColor={hasCar ? AgreGreen.button : '#f4f3f4'}
             />
           </View>
 
-          {/* Placa do veículo (condicional) */}
+          {/* Placa do veículo */}
           {hasCar && (
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Placa do veículo</Text>
@@ -288,10 +322,11 @@ export default function SignupScreen() {
                   placeholder="ABC-1234"
                   placeholderTextColor={AgreGreen.placeholder}
                   value={carNumber}
-                  onChangeText={setCarNumber}
+                  onChangeText={v => { setCarNumber(v); clearError('carNumber'); }}
                   autoCapitalize="characters"
                 />
               </View>
+              <FieldError message={errors.carNumber} />
             </View>
           )}
 
@@ -305,7 +340,7 @@ export default function SignupScreen() {
                 placeholder="Digite município ou UF"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={selectedLocation ? `${selectedLocation.municipality} - ${selectedLocation.uf}` : locationQuery}
-                onChangeText={(text) => { setLocationQuery(text); setLocationId(''); }}
+                onChangeText={v => { setLocationQuery(v); setLocationId(''); clearError('locationId'); }}
                 onFocus={() => { if (selectedLocation) { setLocationQuery(''); setLocationId(''); } }}
                 autoCapitalize="words"
               />
@@ -316,13 +351,14 @@ export default function SignupScreen() {
                   <Pressable
                     key={loc.id}
                     style={{ paddingVertical: 10, paddingHorizontal: 12, backgroundColor: AgreGreen.inputBg, borderRadius: 8 }}
-                    onPress={() => { setLocationId(loc.id); setLocationQuery(''); }}
+                    onPress={() => { setLocationId(loc.id); setLocationQuery(''); clearError('locationId'); }}
                   >
                     <Text style={{ color: AgreGreen.dark, fontSize: 14 }}>{loc.municipality} - {loc.uf}</Text>
                   </Pressable>
                 ))}
               </View>
             )}
+            <FieldError message={errors.locationId} />
           </View>
 
           {/* Criar Conta */}
@@ -346,4 +382,3 @@ export default function SignupScreen() {
     </SafeAreaView>
   );
 }
-

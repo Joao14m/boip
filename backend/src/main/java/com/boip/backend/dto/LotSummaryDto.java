@@ -16,4 +16,5 @@ public class LotSummaryDto {
     String purpose;
     BigDecimal avgWeightKg;
     Integer avgAgeMonths;
+    String uf;
 }
