@@ -8,7 +8,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,12 +24,12 @@ import java.util.Set;
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private final AppUserRepository appUserRepository;
-    private final boolean authBypass;
+    private final FirebaseAuth firebaseAuth;
 
     public FirebaseTokenFilter(@Lazy AppUserRepository appUserRepository,
-                               @Value("${boip.auth.bypass:false}") boolean authBypass) {
+                               FirebaseAuth firebaseAuth) {
         this.appUserRepository = appUserRepository;
-        this.authBypass = authBypass;
+        this.firebaseAuth = firebaseAuth;
     }
 
     @Override
@@ -47,18 +46,10 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         String idToken = header.substring("Bearer ".length()).trim();
 
         try {
-            String uid;
-            String email;
-
-            if (authBypass) {
-                // In bypass mode the raw token string IS the uid — no Firebase call made
-                uid = idToken;
-                email = null;
-            } else {
-                FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
-                uid = decoded.getUid();
-                email = decoded.getEmail();
-            }
+            FirebaseToken decoded = firebaseAuth.verifyIdToken(idToken);
+            String uid = decoded.getUid();
+            String email = decoded.getEmail();
+            boolean emailVerified = decoded.isEmailVerified();
 
             Object principal;
             List<SimpleGrantedAuthority> authorities;
@@ -68,7 +59,7 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
                 principal = appUser;
                 authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
             } else {
-                principal = new AuthUser(uid, email, false, Set.of());
+                principal = new AuthUser(uid, email, emailVerified, Set.of());
                 authorities = List.of();
             }
 

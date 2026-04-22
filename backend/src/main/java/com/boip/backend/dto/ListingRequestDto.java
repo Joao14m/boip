@@ -20,9 +20,6 @@ public class ListingRequestDto {
     @NotNull
     UUID lotId;
 
-    @NotNull
-    UUID sellerUserId;
-
     @NotBlank @Pattern(regexp = "PER_HEAD|TOTAL")
     String priceType;
 

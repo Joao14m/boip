@@ -48,7 +48,14 @@ public class ListingService {
     private final LocationRepository locationRepository;
 
     @Transactional
-    public ListingResponseDto create(ListingRequestDto req) {
+    public ListingResponseDto create(ListingRequestDto req, AppUser caller) {
+        // Ownership guard: caller must own the lot they're listing.
+        CattleLot lot = cattleLotRepository.findById(req.getLotId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lot not found: " + req.getLotId()));
+        if (!caller.getId().equals(lot.getOwnerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lot");
+        }
+
         List<ListingMediaInputDto> mediaItems = req.getMedia();
 
         Set<Integer> seenSlots = new HashSet<>();
@@ -73,7 +80,7 @@ public class ListingService {
 
         Listing entity = Listing.builder()
                 .lotId(req.getLotId())
-                .sellerUserId(req.getSellerUserId())
+                .sellerUserId(caller.getId()) // I have change this
                 .status("DRAFT")
                 .priceType(req.getPriceType())
                 .priceAmount(req.getPriceAmount())
@@ -209,6 +216,8 @@ public class ListingService {
     }
 
     private LotSummaryDto buildLotSummary(UUID lotId) {
+        // Presentational only — lot summaries are shown on the public marketplace feed,
+        // so no caller-ownership filter here. Ownership is enforced at write time (see create()).
         CattleLot lot = cattleLotRepository.findById(lotId).orElse(null);
         if (lot == null) return null;
 

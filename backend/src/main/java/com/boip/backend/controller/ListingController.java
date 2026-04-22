@@ -34,7 +34,7 @@ public class ListingController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ListingResponseDto create(@Valid @RequestBody ListingRequestDto req) {
-        return listingService.create(req);
+        return listingService.create(req, requireAppUser());
     }
 
     @GetMapping("/{id}")
