@@ -1,7 +1,8 @@
 package com.boip.backend.controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import com.asaas.apisdk.models.WebhookConfigDeleteResponseDto;
 import com.asaas.apisdk.models.WebhookConfigGetResponseDto;
 import com.asaas.apisdk.models.WebhookConfigListResponseDto;
 import com.boip.backend.dto.AsaasPaymentEventDto;
+import com.boip.backend.security.WebhookTokenVerifier;
 import com.boip.backend.service.WebhooksService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,9 +31,7 @@ import org.springframework.validation.annotation.Validated;
 @RequiredArgsConstructor
 public class WebhooksController {
     private final WebhooksService webhooksService;
-
-    @Value("${app.webhook-auth-token}")
-    private String webhookAuthToken;
+    private final WebhookTokenVerifier tokenVerifier;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -50,18 +50,27 @@ public class WebhooksController {
     }
 
     @PostMapping("/asaas")
-    @ResponseStatus(HttpStatus.OK)
-    public void handleAsaasEvent(
+    public ResponseEntity<Void> handleAsaasEvent(
+            HttpServletRequest request,
             @RequestHeader(value = "asaas-access-token", required = false) String accessToken,
             @RequestBody AsaasPaymentEventDto event) {
-        if (!webhookAuthToken.equals(accessToken)) {
-            log.warn("Webhook rejected: invalid access token");
-            return;
+
+        if (!tokenVerifier.verify(accessToken)) {
+            // NOTE: getRemoteAddr returns the proxy IP behind load balancers;
+            // prefer X-Forwarded-For when deployed behind a trusted proxy.
+            log.warn("Webhook rejected: invalid access token from {}", request.getRemoteAddr());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        log.info("Asaas webhook accepted: event={} paymentId={}",
+                event.getEvent(),
+                event.getPayment() != null ? event.getPayment().getId() : null);
+
         try {
             webhooksService.handleEvent(event);
         } catch (Exception e) {
             log.error("Webhook processing failed for event: {} - {}", event.getEvent(), e.getMessage(), e);
         }
+        return ResponseEntity.ok().build();
     }
 }

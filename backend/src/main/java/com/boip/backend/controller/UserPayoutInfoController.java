@@ -3,7 +3,6 @@ package com.boip.backend.controller;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,6 +16,8 @@ import com.boip.backend.dto.UserPayoutInfoRequestDto;
 import com.boip.backend.dto.UserPayoutInfoResponseDto;
 import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.UserPayoutInfoService;
+
+import static com.boip.backend.auth.SecurityUtils.requireAppUser;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,12 +49,4 @@ public class UserPayoutInfoController {
         return userPayoutInfoService.get(userId);
     }
 
-    private AppUser requireAppUser() {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
-        }
-        if (auth.getPrincipal() instanceof AppUser u) return u;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
-    }
 }

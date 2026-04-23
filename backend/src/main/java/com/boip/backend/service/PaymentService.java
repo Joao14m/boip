@@ -37,6 +37,10 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Listing is not active");
         }
 
+        if (buyer.getId().equals(listing.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot buy your own listing");
+        }
+
         try {
             if (buyer.getAsaasCustomerId() == null) {
                 CustomerSaveRequestDto customerRequest = CustomerSaveRequestDto.builder()
@@ -81,7 +85,33 @@ public class PaymentService {
         }
     }
 
-    public PaymentBillingInfoResponseDto retrieveBilling(String chargeId){
+    public PaymentBillingInfoResponseDto retrieveBilling(String chargeId, AppUser caller){
+        // 1) Fetch the charge itself to get externalReference + customer
+        PaymentGetResponseDto charge;
+        try {
+            charge = asaasSdk.payment.retrieveASinglePayment(chargeId); // or whatever the SDK name is
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Charge not found: " + chargeId);
+        }
+
+        // 2) Resolve the listing via externalReference
+        UUID listingId;
+        try {
+            listingId = UUID.fromString(charge.getExternalReference());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Charge not linked to a listing");
+        }
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Listing not found"));
+
+        // 3) Authorize: caller is either the seller or the buyer
+        boolean isSeller = caller.getId().equals(listing.getSellerUserId());
+        boolean isBuyer  = caller.getAsaasCustomerId() != null
+                            && caller.getAsaasCustomerId().equals(charge.getCustomer());
+        if (!isSeller && !isBuyer) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your charge");
+        }
+
         return asaasSdk.payment.retrievePaymentBillingInformation(chargeId);
     }
 }

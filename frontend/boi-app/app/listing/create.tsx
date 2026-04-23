@@ -134,7 +134,6 @@ export default function CreateListingScreen() {
       // 4. Create listing
       const listing = await api.post<any>('/api/listings', {
         lotId: lot.id,
-        sellerUserId: userId,
         priceType,
         priceAmount: Number(priceAmount),
         currency: 'BRL',

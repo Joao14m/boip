@@ -19,9 +19,6 @@ public class UserUpdateRequestDto {
     
     @Size(max = 120) 
     String lastName;
-
-    @Email 
-    String email;
     
     @Size(max = 20) 
     String phone;

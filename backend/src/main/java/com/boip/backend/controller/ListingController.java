@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
@@ -14,8 +12,9 @@ import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.PageResponseDto;
 import com.boip.backend.dto.StatusUpdateRequestDto;
-import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.ListingService;
+
+import static com.boip.backend.auth.SecurityUtils.requireAppUser;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -89,9 +88,4 @@ public class ListingController {
         listingService.removeMedia(mediaId, requireAppUser());
     }
 
-    private AppUser requireAppUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof AppUser u) return u;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
-    }
 }
