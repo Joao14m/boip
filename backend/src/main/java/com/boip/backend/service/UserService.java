@@ -1,5 +1,6 @@
 package com.boip.backend.service;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
     private final AppUserRepository usersRepository;
     private final LocationRepository locationRepository;
+    private final AuditService auditService;
 
     public UserResponseDto readUser(UUID id, AppUser caller) {
          if (!caller.getId().equals(id)) {
@@ -50,8 +52,20 @@ public class UserService {
         if (req.getFirstName() != null && !req.getFirstName().trim().isEmpty()) existing.setFirstName(req.getFirstName().trim());
         if (req.getLastName() != null && !req.getLastName().trim().isEmpty()) existing.setLastName(req.getLastName().trim());
         if (req.getPhone() != null && !req.getPhone().trim().isEmpty()) existing.setPhone(req.getPhone().trim());
-        if (req.getPersonDoc() != null && !req.getPersonDoc().trim().isEmpty()) existing.setPersonDoc(req.getPersonDoc().trim());
-        if (req.getDocType() != null && !req.getDocType().trim().isEmpty()) existing.setDocType(req.getDocType().trim().toUpperCase());
+        if (req.getPersonDoc() != null && !req.getPersonDoc().trim().isEmpty()) {
+            if (existing.getAsaasCustomerId() != null) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Document cannot be changed after a payment account has been created");
+            }
+            existing.setPersonDoc(req.getPersonDoc().trim());
+        }
+        if (req.getDocType() != null && !req.getDocType().trim().isEmpty()) {
+            if (existing.getAsaasCustomerId() != null) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Document type cannot be changed after a payment account has been created");
+            }
+            existing.setDocType(req.getDocType().trim().toUpperCase());
+        }
         if (req.getCarNumber() != null && !req.getCarNumber().trim().isEmpty()) existing.setCarNumber(req.getCarNumber().trim());
         if (req.getLocationId() != null) existing.setLocationId(req.getLocationId());
 
@@ -70,6 +84,7 @@ public class UserService {
         if (!usersRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id);
         }
+        auditService.record(caller.getId(), "USER_DELETED", id, Map.of());
         usersRepository.deleteById(id);
     }
 }

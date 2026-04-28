@@ -14,5 +14,7 @@ COPY --from=build /app/target/extracted/dependencies/ ./
 COPY --from=build /app/target/extracted/spring-boot-loader/ ./
 COPY --from=build /app/target/extracted/snapshot-dependencies/ ./
 COPY --from=build /app/target/extracted/application/ ./
+RUN addgroup -S app && adduser -S -u 1000 -G app app && chown -R app:app /app
+USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

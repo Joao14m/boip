@@ -59,7 +59,7 @@ public class CattleController {
                                                 @RequestParam(required = false) String sort,
                                                 @RequestParam(required = false) String direction,
                                                 @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+                                                @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
         return cattleService.filter(locationId, uf, municipality, sort, direction, page, size);
     }
 

@@ -2,6 +2,7 @@ package com.boip.backend.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +49,7 @@ public class WebhooksService {
     private final UserPayoutInfoRepository userPayoutInfoRepository;
     private final WebhookEventRepository webhookEventRepository;
     private final TransferService transferService;
+    private final AuditService auditService;
 
     @Value("${app.webhook-url}")
     private String webhookUrl;
@@ -119,11 +121,17 @@ public class WebhooksService {
 
         listing.setStatus("SOLD");
         listingRepository.save(listing);
+        auditService.record(null, "LISTING_SOLD", listingId,
+                Map.of("paymentId", payment.getId(), "amount", paidAmount));
 
         userPayoutInfoRepository.findByUserId(listing.getSellerUserId()).ifPresent(payoutInfo -> {
             double sellerAmount = listing.getPriceAmount().doubleValue() * (1 - PLATFORM_COMMISSION);
             TransferSaveRequestDto transfer = buildTransfer(payoutInfo, sellerAmount, listingId, listing);
             transferService.createTransfer(transfer);
+            auditService.record(null, "PAYOUT_TRIGGERED", listingId,
+                    Map.of("sellerUserId", listing.getSellerUserId().toString(),
+                           "amount", sellerAmount,
+                           "transferType", payoutInfo.getTransferType()));
         });
     }
 

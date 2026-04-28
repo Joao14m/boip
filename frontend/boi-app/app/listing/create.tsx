@@ -34,7 +34,7 @@ const SEXES = [
 ];
 
 export default function CreateListingScreen() {
-  const { userId } = useAuth();
+  const { userId, user } = useAuth();
   const [userLocationId, setUserLocationId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function CreateListingScreen() {
       // 3. Upload images to Firebase Storage
       const media = [];
       for (let i = 0; i < images.length; i++) {
-        const path = `listings/${userId}/${lot.id}/${i}.jpg`;
+        const path = `listings/${user!.uid}/${lot.id}/${i}.jpg`;
         const url = await uploadImage(images[i], path);
         media.push({ mediaSlot: i, mediaType: 'IMAGE', mediaKey: url, contentType: 'image/jpeg' });
       }

@@ -1,6 +1,7 @@
 package com.boip.backend.service;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class PaymentService {
     private final AsaasSdk asaasSdk;
     private final ListingRepository listingRepository;
     private final AppUserRepository appUserRepository;
+    private final AuditService auditService;
 
     public PaymentGetResponseDto createCharge(UUID listingId, AppUser buyer){
         Listing listing = listingRepository.findById(listingId)
@@ -50,11 +52,10 @@ public class PaymentService {
                     .cpfCnpj(buyer.getPersonDoc())
                     .build();
 
-                log.info("Creating Asaas customer: name={}, email={}, phone={}, cpfCnpj={}",
-                    customerRequest.getName(), customerRequest.getEmail(),
-                    customerRequest.getMobilePhone(), customerRequest.getCpfCnpj());
+                log.info("Creating Asaas customer for buyerId={}", buyer.getId());
 
                 String asaasId = asaasSdk.customer.createNewCustomer(customerRequest).getId();
+                log.info("Asaas customer created: buyerId={} asaasId={}", buyer.getId(), asaasId);
                 buyer.setAsaasCustomerId(asaasId);
                 appUserRepository.save(buyer);
             }
@@ -70,7 +71,10 @@ public class PaymentService {
             log.info("Creating Asaas payment: customer={}, value={}, dueDate={}, externalRef={}",
                 request.getCustomer(), request.getValue(), request.getDueDate(), request.getExternalReference());
 
-            return asaasSdk.payment.createNewPayment(request);
+            PaymentGetResponseDto created = asaasSdk.payment.createNewPayment(request);
+            auditService.record(buyer.getId(), "PAYMENT_CHARGE_CREATED", listingId,
+                    Map.of("amount", listing.getPriceAmount(), "asaasPaymentId", created.getId()));
+            return created;
         } catch (com.asaas.apisdk.exceptions.ErrorResponseDtoException e) {
             var errors = e.getError().getErrors();
             if (errors != null) {

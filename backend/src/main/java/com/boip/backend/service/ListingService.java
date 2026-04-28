@@ -13,9 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 import com.boip.backend.dto.ListingMediaInputDto;
 import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
+import com.boip.backend.dto.ListingPatchRequestDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.LotSummaryDto;
@@ -46,6 +49,7 @@ public class ListingService {
     private final CattleLotRepository cattleLotRepository;
     private final CattleLotProfileRepository cattleLotProfileRepository;
     private final LocationRepository locationRepository;
+    private final AuditService auditService;
 
     @Transactional
     public ListingResponseDto create(ListingRequestDto req, AppUser caller) {
@@ -58,7 +62,7 @@ public class ListingService {
 
         List<ListingMediaInputDto> mediaItems = req.getMedia();
 
-        String expectedPrefix = "listings/" + caller.getId() + "/" + lot.getId() + "/";
+        String expectedPrefix = "listings/" + caller.getFirebaseUid() + "/" + lot.getId() + "/";
         Set<Integer> seenSlots = new HashSet<>();
         for (ListingMediaInputDto m : mediaItems) {
             if (!seenSlots.add(m.getMediaSlot())) {
@@ -139,6 +143,24 @@ public class ListingService {
         return PageResponseDto.of(listingRepository.findAllByStatus(status, pageable).map(this::toDto));
     }
 
+    @Transactional
+    public ListingResponseDto patch(UUID id, ListingPatchRequestDto req, AppUser caller) {
+        Listing entity = listingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id));
+        if (!caller.getId().equals(entity.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
+        }
+        if (!Set.of("DRAFT", "PAUSED").contains(entity.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Price can only be updated on DRAFT or PAUSED listings");
+        }
+        if (req.getPriceType() != null) entity.setPriceType(req.getPriceType());
+        if (req.getPriceAmount() != null) entity.setPriceAmount(req.getPriceAmount());
+        if (req.getCurrency() != null) entity.setCurrency(req.getCurrency().trim());
+        if (req.getExpiresAt() != null) entity.setExpiresAt(req.getExpiresAt());
+        return toDto(listingRepository.save(entity));
+    }
+
     public ListingResponseDto updateStatus(UUID id, String newStatus, AppUser caller) {
         if (newStatus == null || !VALID_STATUSES.contains(newStatus)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -149,11 +171,15 @@ public class ListingService {
         if (!caller.getId().equals(entity.getSellerUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
         }
+        String previousStatus = entity.getStatus();
         entity.setStatus(newStatus);
         if ("ACTIVE".equals(newStatus) && entity.getPublishedAt() == null) {
             entity.setPublishedAt(OffsetDateTime.now());
         }
-        return toDto(listingRepository.save(entity));
+        ListingResponseDto result = toDto(listingRepository.save(entity));
+        auditService.record(caller.getId(), "LISTING_STATUS_CHANGED", id,
+                Map.of("from", previousStatus, "to", newStatus));
+        return result;
     }
 
     public void delete(UUID id, AppUser caller) {
@@ -184,7 +210,7 @@ public class ListingService {
         if (req.getMediaSlot() < 3 && !"IMAGE".equals(req.getMediaType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slots 0-2 must be IMAGE");
         }
-        String expectedPrefix = "listings/" + caller.getId() + "/" + listing.getLotId() + "/";
+        String expectedPrefix = "listings/" + caller.getFirebaseUid() + "/" + listing.getLotId() + "/";
         if (!isValidMediaKey(req.getMediaKey(), expectedPrefix)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "mediaKey must be under " + expectedPrefix);

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
+import com.boip.backend.dto.ListingPatchRequestDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.PageResponseDto;
@@ -48,11 +49,18 @@ public class ListingController {
             @RequestParam(required = false) UUID lotId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
         if (sellerUserId != null) return listingService.findBySeller(sellerUserId, page, size);
         if (lotId != null) return listingService.findByLot(lotId, page, size);
         String effectiveStatus = (status != null && !status.isBlank()) ? status.toUpperCase() : "ACTIVE";
         return listingService.findByStatus(effectiveStatus, page, size);
+    }
+
+    @PatchMapping("/{id}")
+    public ListingResponseDto patch(
+            @PathVariable UUID id,
+            @Valid @RequestBody ListingPatchRequestDto req) {
+        return listingService.patch(id, req, requireAppUser());
     }
 
     @PatchMapping("/{id}/status")

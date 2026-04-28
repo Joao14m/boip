@@ -14,8 +14,6 @@ public final class UserMapper {
                 .id(entity.getId())
                 .firstName(entity.getFirstName())
                 .lastName(entity.getLastName())
-                .email(entity.getEmail())
-                .phone(entity.getPhone())
                 .uf(location != null ? location.getUf() : null)
                 .build();
     }
