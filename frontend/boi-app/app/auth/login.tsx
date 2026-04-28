@@ -11,18 +11,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/login.styles';
 import { FieldError } from '@/components/FieldError';
 
 const FIREBASE_ERRORS: Record<string, string> = {
-  'auth/invalid-email':        'E-mail inválido.',
-  'auth/user-not-found':       'Nenhuma conta encontrada com este e-mail.',
-  'auth/wrong-password':       'Senha incorreta.',
-  'auth/invalid-credential':   'E-mail ou senha incorretos.',
-  'auth/too-many-requests':    'Muitas tentativas. Tente novamente mais tarde.',
+  'auth/invalid-email':       'E-mail inválido.',
+  'auth/user-not-found':      'Nenhuma conta encontrada com este e-mail.',
+  'auth/wrong-password':      'Senha incorreta.',
+  'auth/invalid-credential':  'E-mail ou senha incorretos.',
+  'auth/too-many-requests':   'Muitas tentativas. Tente novamente mais tarde.',
 };
 
 export default function LoginScreen() {
@@ -40,9 +40,9 @@ export default function LoginScreen() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!email.trim())    e.email    = 'E-mail é obrigatório.';
-    else if (!email.includes('@')) e.email = 'E-mail inválido.';
-    if (!password)        e.password = 'Senha é obrigatória.';
+    if (!email.trim())           e.email    = 'E-mail é obrigatório.';
+    else if (!email.includes('@')) e.email  = 'E-mail inválido.';
+    if (!password)               e.password = 'Senha é obrigatória.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -62,109 +62,146 @@ export default function LoginScreen() {
     }
   };
 
+  const handleDemo = async () => {
+    setFormError('');
+    try {
+      setLoading(true);
+      await signInAnonymously(auth);
+      router.replace('/(tabs)/feed');
+    } catch {
+      setFormError('Não foi possível entrar como demonstração.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* ── Efeitos de brilho no fundo ── */}
+      <View style={styles.glowTopLeft} pointerEvents="none" />
+      <View style={styles.glowBottomRight} pointerEvents="none" />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* ── Header ── */}
-        <View style={styles.header}>
-          <View style={styles.circle1} />
-          <View style={styles.circle2} />
-          <View style={styles.circle3} />
-          <Text style={styles.headerBrand}>Agregis</Text>
-          <Text style={styles.cattleEmoji}>🐄</Text>
-        </View>
-
-        {/* ── Card ── */}
         <ScrollView
-          style={styles.card}
-          contentContainerStyle={styles.cardContent}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.welcome}>Bem-vindo de volta</Text>
-          <Text style={styles.subtitle}>Entre na sua conta para continuar</Text>
+          {/* ── Card flutuante ── */}
+          <View style={styles.card}>
 
-          {/* Banner de erro do servidor */}
-          {formError ? (
-            <View style={{ backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-              <Text style={{ color: '#C53030', fontSize: 13 }}>{formError}</Text>
+            {/* Logo */}
+            <View style={styles.logoRow}>
+              <View style={styles.logoBox}>
+                <Ionicons name="storefront" size={22} color="#fff" />
+              </View>
+              <Text style={styles.logoText}>BoiMarket</Text>
             </View>
-          ) : null}
 
-          {/* E-mail */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>E-mail</Text>
-            <View style={[styles.inputRow, errors.email ? { borderColor: '#E53E3E', borderWidth: 1, borderRadius: 10 } : null]}>
-              <Ionicons name="mail-outline" size={20} color={errors.email ? '#E53E3E' : AgreGreen.brand} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="seu@email.com"
-                placeholderTextColor={AgreGreen.placeholder}
-                value={email}
-                onChangeText={v => { setEmail(v); clearError('email'); setFormError(''); }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-            <FieldError message={errors.email} />
-          </View>
+            <Text style={styles.welcome}>Bem-vindo de volta</Text>
+            <Text style={styles.subtitle}>Entre com suas credenciais para acessar sua conta</Text>
 
-          {/* Senha */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Senha</Text>
-            <View style={[styles.inputRow, errors.password ? { borderColor: '#E53E3E', borderWidth: 1, borderRadius: 10 } : null]}>
-              <Ionicons name="lock-closed-outline" size={20} color={errors.password ? '#E53E3E' : AgreGreen.brand} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Sua senha"
-                placeholderTextColor={AgreGreen.placeholder}
-                value={password}
-                onChangeText={v => { setPassword(v); clearError('password'); setFormError(''); }}
-                secureTextEntry={!showPassword}
-              />
-              <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
-                <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={AgreGreen.muted}
+            {/* Banner de erro */}
+            {formError ? (
+              <View style={{ backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                <Text style={{ color: '#C53030', fontSize: 13 }}>{formError}</Text>
+              </View>
+            ) : null}
+
+            {/* E-mail */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Email</Text>
+              <View style={[styles.inputRow, errors.email ? { borderColor: '#E53E3E' } : null]}>
+                <Ionicons name="mail-outline" size={19} color={errors.email ? '#E53E3E' : AgreGreen.placeholder} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="seu@email.com"
+                  placeholderTextColor={AgreGreen.placeholder}
+                  value={email}
+                  onChangeText={v => { setEmail(v); clearError('email'); setFormError(''); }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
+              </View>
+              <FieldError message={errors.email} />
+            </View>
+
+            {/* Senha */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Senha</Text>
+              <View style={[styles.inputRow, errors.password ? { borderColor: '#E53E3E' } : null]}>
+                <Ionicons name="lock-closed-outline" size={19} color={errors.password ? '#E53E3E' : AgreGreen.placeholder} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor={AgreGreen.placeholder}
+                  value={password}
+                  onChangeText={v => { setPassword(v); clearError('password'); setFormError(''); }}
+                  secureTextEntry={!showPassword}
+                />
+                <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
+                  <Ionicons
+                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                    size={19}
+                    color={AgreGreen.placeholder}
+                  />
+                </Pressable>
+              </View>
+              <FieldError message={errors.password} />
+            </View>
+
+            {/* Lembrar-me + Esqueceu a senha */}
+            <View style={styles.rowBetween}>
+              <Pressable style={styles.checkRow} onPress={() => setRememberMe(v => !v)}>
+                <View style={[styles.checkbox, rememberMe ? styles.checkboxOn : null]}>
+                  {rememberMe && <Ionicons name="checkmark" size={11} color="#fff" />}
+                </View>
+                <Text style={styles.checkLabel}>Lembrar-me</Text>
+              </Pressable>
+              <Pressable>
+                <Text style={styles.forgotText}>Esqueceu a senha?</Text>
               </Pressable>
             </View>
-            <FieldError message={errors.password} />
-          </View>
 
-          {/* Lembrar-me + Esqueceu a senha */}
-          <View style={styles.rowBetween}>
-            <Pressable style={styles.checkRow} onPress={() => setRememberMe(v => !v)}>
-              <View style={[styles.checkbox, rememberMe ? styles.checkboxOn : null]}>
-                {rememberMe && <Ionicons name="checkmark" size={12} color="#fff" />}
-              </View>
-              <Text style={styles.checkLabel}>Lembrar-me</Text>
+            {/* Entrar */}
+            <Pressable
+              style={({ pressed }) => [styles.button, pressed ? styles.buttonPressed : null]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
             </Pressable>
-            <Pressable>
-              <Text style={styles.forgotText}>Esqueceu a senha?</Text>
-            </Pressable>
-          </View>
 
-          {/* Entrar */}
-          <Pressable
-            style={({ pressed }) => [styles.button, pressed ? styles.buttonPressed : null]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
-          </Pressable>
+            {/* Link cadastro */}
+            <View style={styles.bottomRow}>
+              <Text style={styles.bottomText}>Não tem uma conta? </Text>
+              <Pressable onPress={() => router.replace('/auth/signup')}>
+                <Text style={styles.bottomLink}>Criar conta</Text>
+              </Pressable>
+            </View>
 
-          {/* Link cadastro */}
-          <View style={styles.bottomRow}>
-            <Text style={styles.bottomText}>Não tem uma conta? </Text>
-            <Pressable onPress={() => router.replace('/auth/signup')}>
-              <Text style={styles.bottomLink}>Criar Conta</Text>
+            {/* Divisor acesso rápido */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>ACESSO RÁPIDO</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Demo */}
+            <Pressable
+              style={({ pressed }) => [styles.demoBtn, pressed ? styles.demoBtnPressed : null]}
+              onPress={handleDemo}
+              disabled={loading}
+            >
+              <Ionicons name="storefront-outline" size={18} color="#555" />
+              <Text style={styles.demoBtnText}>Entrar como Demonstração</Text>
             </Pressable>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

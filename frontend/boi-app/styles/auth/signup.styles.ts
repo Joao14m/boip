@@ -1,88 +1,50 @@
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { AgreGreen } from '@/constants/theme';
-
-export const HEADER_HEIGHT = Dimensions.get('window').height * 0.28;
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AgreGreen.header,
+    backgroundColor: '#fff',
   },
   flex: { flex: 1 },
 
-  // Header
-  header: {
-    height: HEADER_HEIGHT,
-    backgroundColor: AgreGreen.header,
-    overflow: 'hidden',
-    position: 'relative',
+  // Logo row (same as login)
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 28,
   },
-  circle1: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: AgreGreen.brand,
-    opacity: 0.3,
-    top: -60,
-    right: -50,
+  logoBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: AgreGreen.button,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  circle2: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: AgreGreen.dark,
-    opacity: 0.15,
-    top: 30,
-    right: 70,
-  },
-  circle3: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: AgreGreen.brand,
-    opacity: 0.18,
-    bottom: 20,
-    right: 16,
-  },
-  headerBrand: {
-    position: 'absolute',
-    top: 20,
-    left: 28,
-    fontSize: 26,
+  logoText: {
+    fontSize: 22,
     fontWeight: '800',
     color: AgreGreen.dark,
-    letterSpacing: 1,
-  },
-  cattleEmoji: {
-    fontSize: 56,
-    transform: [{ scaleX: -1 }],
-    position: 'absolute',
-    bottom: 12,
-    left: 24,
-    opacity: 0.85,
+    letterSpacing: 0.3,
   },
 
-  // Card
+  // Card (ScrollView)
   card: {
     flex: 1,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    marginTop: -28,
   },
   cardContent: {
     paddingHorizontal: 28,
-    paddingTop: 32,
-    paddingBottom: 48,
+    paddingTop: 48,
+    paddingBottom: 60,
   },
   welcome: {
     fontSize: 26,
     fontWeight: '800',
     color: AgreGreen.dark,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
@@ -166,18 +128,118 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  // Location dropdown
+  locationDropdown: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#ECECEC',
+    maxHeight: 200,
+  },
+  locationOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  locationOptionText: {
+    flex: 1,
+    fontSize: 14,
+    color: AgreGreen.dark,
+  },
+  locationOptionActive: {
+    backgroundColor: AgreGreen.pale,
+  },
+  locationOptionTextActive: {
+    color: AgreGreen.dark,
+    fontWeight: '600',
+  },
+
+  // Modal de localização
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECEC',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1B2D24',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 16,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 46,
+    gap: 8,
+  },
+  modalSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1B2D24',
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  modalOptionActive: {
+    backgroundColor: AgreGreen.pale,
+  },
+  modalOptionText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1B2D24',
+  },
+  modalOptionTextActive: {
+    color: AgreGreen.dark,
+    fontWeight: '600',
+  },
+  modalEmpty: {
+    alignItems: 'center',
+    paddingTop: 48,
+    gap: 12,
+  },
+  modalEmptyText: {
+    fontSize: 14,
+    color: AgreGreen.muted,
+    textAlign: 'center',
+  },
+
   // Button
   button: {
-    backgroundColor: AgreGreen.button,
+    backgroundColor: '#1a1a1a',
     borderRadius: 16,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: AgreGreen.dark,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.18,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 5,
     marginTop: 8,
   },
   buttonPressed: {

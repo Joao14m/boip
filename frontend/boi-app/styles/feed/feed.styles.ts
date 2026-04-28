@@ -24,6 +24,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  headerBrandGroup: {
+    flexDirection: 'column',
+    gap: 1,
+  },
   headerBrand: {
     fontSize: 20,
     fontWeight: '800',
@@ -33,10 +37,24 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     color: AgreGreen.muted,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  userBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#DDD',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   createBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AgreGreen.button,
+    backgroundColor: '#1a1a1a',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -69,7 +87,26 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1B2D24',
   },
+  filterToggleRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  clearInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  clearInlineText: {
+    fontSize: 13,
+    color: AgreGreen.muted,
+  },
   filterToggleAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  filterToggleActionText: {
     fontSize: 13,
     color: AgreGreen.muted,
   },
@@ -173,29 +210,7 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* ── Range Slider ── */
-  rangeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  rangeValue: {
-    fontSize: 13,
-    color: AgreGreen.muted,
-  },
-  sliderTrack: {
-    height: 4,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 2,
-    marginVertical: 8,
-  },
-  sliderFill: {
-    height: 4,
-    backgroundColor: AgreGreen.brand,
-    borderRadius: 2,
-    position: 'absolute',
-    top: 0,
-  },
+  /* ── Range Inputs ── */
   rangeInputRow: {
     flexDirection: 'row',
     gap: 10,
@@ -229,24 +244,42 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* ── Results Header ── */
-  resultsHeader: {
+  /* ── Tabs ── */
+  tabBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: '#fff',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingVertical: 10,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECEC',
   },
-  resultsCount: {
-    fontSize: 14,
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+  },
+  tabActive: {
+    backgroundColor: AgreGreen.pale,
+  },
+  tabText: {
+    fontSize: 13,
     fontWeight: '600',
-    color: '#1B2D24',
+    color: '#888',
+  },
+  tabTextActive: {
+    color: AgreGreen.dark,
   },
 
   /* ── Listing Cards ── */
   listContent: {
     paddingHorizontal: 16,
+    paddingTop: 14,
     paddingBottom: 24,
   },
   card: {
@@ -288,6 +321,39 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  photoCountBadge: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  photoCountText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  imageDots: {
+    position: 'absolute',
+    bottom: 10,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
+  imageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  imageDotActive: {
+    backgroundColor: '#fff',
   },
   cardBody: {
     padding: 14,
@@ -345,28 +411,27 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     marginTop: 6,
+    marginBottom: 2,
   },
   locationText: {
     fontSize: 12,
     color: AgreGreen.muted,
   },
 
-  /* ── Buy Button ── */
-  buyBtn: {
+  /* ── Detail Button ── */
+  detailBtn: {
     marginTop: 12,
-    backgroundColor: AgreGreen.button,
+    borderWidth: 1.5,
+    borderColor: '#DDD',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buyBtnDisabled: {
-    opacity: 0.6,
-  },
-  buyBtnText: {
-    color: '#fff',
+  detailBtnText: {
+    color: '#444',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   /* ── Empty / Loading ── */
