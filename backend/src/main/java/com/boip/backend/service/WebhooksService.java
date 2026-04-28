@@ -1,5 +1,6 @@
 package com.boip.backend.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,12 +26,17 @@ import com.boip.backend.dto.AsaasPaymentEventDto;
 import com.boip.backend.entity.AppUser;
 import com.boip.backend.entity.Listing;
 import com.boip.backend.entity.UserPayoutInfo;
+import com.boip.backend.entity.WebhookEvent;
 import com.boip.backend.repository.AppUserRepository;
 import com.boip.backend.repository.ListingRepository;
 import com.boip.backend.repository.UserPayoutInfoRepository;
+import com.boip.backend.repository.WebhookEventRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WebhooksService {
@@ -40,6 +46,7 @@ public class WebhooksService {
     private final ListingRepository listingRepository;
     private final AppUserRepository appUserRepository;
     private final UserPayoutInfoRepository userPayoutInfoRepository;
+    private final WebhookEventRepository webhookEventRepository;
     private final TransferService transferService;
 
     @Value("${app.webhook-url}")
@@ -48,11 +55,14 @@ public class WebhooksService {
     @Value("${app.webhook-auth-token}")
     private String webhookAuthToken;
 
+    @Value("${app.webhook-contact-email}")
+    private String webhookContactEmail;
+
     public WebhookConfigGetResponseDto registerWebhook() {
         WebhookConfigSaveRequestDto request = WebhookConfigSaveRequestDto.builder()
             .name("Agregis Payments")
             .url(webhookUrl)
-            .email("ageris.contato@gmail.com")
+            .email(webhookContactEmail)
             .enabled(true)
             .interrupted(false)
             .authToken(webhookAuthToken)
@@ -79,10 +89,33 @@ public class WebhooksService {
         if (!"PAYMENT_CONFIRMED".equals(eventType) && !"PAYMENT_RECEIVED".equals(eventType)) return;
 
         AsaasPaymentEventDto.Payment payment = event.getPayment();
+
+        // Idempotency guard: insert-first on payment_id PK. Any duplicate
+        // (Asaas retry, CONFIRMED+RECEIVED pair, manual replay) hits the
+        // unique constraint and is dropped before the payout fires.
+        try {
+            webhookEventRepository.saveAndFlush(new WebhookEvent(payment.getId(), eventType));
+        } catch (DataIntegrityViolationException duplicate) {
+            log.info("Duplicate webhook event ignored: paymentId={} eventType={}",
+                    payment.getId(), eventType);
+            return;
+        }
+
         UUID listingId = UUID.fromString(payment.getExternalReference());
 
         Listing listing = listingRepository.findById(listingId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + listingId));
+
+        // Verify the paid amount matches the listing price. Guards against an
+        // attacker creating a cheap charge with a forged externalReference
+        // pointing at a high-value listing, which would otherwise trigger a
+        // payout for 95% of the listing price regardless of what was actually paid.
+        BigDecimal paidAmount = payment.getValue() == null ? BigDecimal.ZERO : BigDecimal.valueOf(payment.getValue());
+        if (paidAmount.compareTo(listing.getPriceAmount()) != 0) {
+            log.error("Payment amount mismatch: listingId={} expected={} paid={} paymentId={} — refusing payout",
+                    listingId, listing.getPriceAmount(), paidAmount, payment.getId());
+            return;
+        }
 
         listing.setStatus("SOLD");
         listingRepository.save(listing);

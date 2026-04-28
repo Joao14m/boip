@@ -33,22 +33,6 @@ public class WebhooksController {
     private final WebhooksService webhooksService;
     private final WebhookTokenVerifier tokenVerifier;
 
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public WebhookConfigGetResponseDto register() {
-        return webhooksService.registerWebhook();
-    }
-
-    @GetMapping
-    public WebhookConfigListResponseDto list() {
-        return webhooksService.listWebhooks();
-    }
-
-    @DeleteMapping("/{webhookId}")
-    public WebhookConfigDeleteResponseDto delete(@PathVariable String webhookId) {
-        return webhooksService.deleteWebhook(webhookId);
-    }
-
     @PostMapping("/asaas")
     public ResponseEntity<Void> handleAsaasEvent(
             HttpServletRequest request,

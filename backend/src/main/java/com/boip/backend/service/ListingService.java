@@ -58,6 +58,7 @@ public class ListingService {
 
         List<ListingMediaInputDto> mediaItems = req.getMedia();
 
+        String expectedPrefix = "listings/" + caller.getId() + "/" + lot.getId() + "/";
         Set<Integer> seenSlots = new HashSet<>();
         for (ListingMediaInputDto m : mediaItems) {
             if (!seenSlots.add(m.getMediaSlot())) {
@@ -69,6 +70,13 @@ public class ListingService {
             }
             if (m.getMediaSlot() < 3 && !"IMAGE".equals(m.getMediaType())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slots 0-2 must be IMAGE");
+            }
+            // Pin mediaKey to the caller's own Storage path. Without this, a client could submit
+            // listings/{otherUserId}/.../x.jpg and have the listing render someone else's media,
+            // or smuggle path traversal segments past the public-read Firebase Storage rule.
+            if (!isValidMediaKey(m.getMediaKey(), expectedPrefix)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "mediaKey must be under " + expectedPrefix);
             }
         }
 
@@ -176,6 +184,11 @@ public class ListingService {
         if (req.getMediaSlot() < 3 && !"IMAGE".equals(req.getMediaType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slots 0-2 must be IMAGE");
         }
+        String expectedPrefix = "listings/" + caller.getId() + "/" + listing.getLotId() + "/";
+        if (!isValidMediaKey(req.getMediaKey(), expectedPrefix)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "mediaKey must be under " + expectedPrefix);
+        }
 
         ListingMedia entity = ListingMedia.builder()
                 .listingId(req.getListingId())
@@ -213,6 +226,16 @@ public class ListingService {
         LotSummaryDto lotSummary = buildLotSummary(entity.getLotId());
 
         return ListingMapper.toDto(entity, media, lotSummary);
+    }
+
+    private static boolean isValidMediaKey(String key, String expectedPrefix) {
+        if (key == null || !key.startsWith(expectedPrefix)) return false;
+        // Block traversal/empty segments inside the suffix.
+        String suffix = key.substring(expectedPrefix.length());
+        if (suffix.isBlank() || suffix.contains("..") || suffix.contains("//") || suffix.startsWith("/")) {
+            return false;
+        }
+        return true;
     }
 
     private LotSummaryDto buildLotSummary(UUID lotId) {

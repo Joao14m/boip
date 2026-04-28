@@ -26,6 +26,7 @@ public class ListingRequestDto {
     @NotNull @DecimalMin("0.01")
     BigDecimal priceAmount;
 
+    @Pattern(regexp = "^[A-Z]{3}$", message = "currency must be a 3-letter ISO code")
     String currency;
 
     OffsetDateTime expiresAt;
