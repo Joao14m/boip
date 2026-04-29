@@ -1,40 +1,16 @@
 import { StyleSheet } from 'react-native';
-import { AgreGreen } from '@/constants/theme';
+import { AgreGreen, Fonts } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   // ── Fundo ──────────────────────────────────────
   container: {
     flex: 1,
-    backgroundColor: '#EDF8F2',
+    backgroundColor: '#FFFFFF',
   },
   flex: { flex: 1 },
 
-  // Brilho de fundo (posicionado absolutamente)
-  glowTopLeft: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: '#fff',
-    opacity: 0.45,
-    top: -100,
-    left: -80,
-  },
-  glowBottomRight: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: AgreGreen.brand,
-    opacity: 0.12,
-    bottom: -60,
-    right: -60,
-  },
-
   // ── ScrollView ─────────────────────────────────
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -42,17 +18,17 @@ export const styles = StyleSheet.create({
     paddingVertical: 36,
   },
 
-  // ── Card flutuante ─────────────────────────────
+  // ── Card ───────────────────────────────────────
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingHorizontal: 28,
     paddingVertical: 32,
-    shadowColor: '#2D6A4F',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
   },
 
   // ── Logo ───────────────────────────────────────
@@ -71,41 +47,57 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoText: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontFamily: Fonts.extraBold,
+    fontSize: 20,
     color: AgreGreen.dark,
     letterSpacing: 0.3,
   },
 
   // ── Títulos ────────────────────────────────────
   welcome: {
+    fontFamily: Fonts.extraBold,
     fontSize: 26,
-    fontWeight: '800',
-    color: AgreGreen.dark,
+    color: '#0F1C15',
     marginBottom: 6,
   },
   subtitle: {
+    fontFamily: Fonts.regular,
     fontSize: 14,
     color: AgreGreen.muted,
     lineHeight: 20,
-    marginBottom: 28,
+    marginBottom: 24,
+  },
+
+  // ── Banner de erro ─────────────────────────────
+  errorBanner: {
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FED7D7',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+  errorBannerText: {
+    fontFamily: Fonts.regular,
+    color: '#C53030',
+    fontSize: 13,
   },
 
   // ── Inputs ─────────────────────────────────────
-  fieldGroup: { marginBottom: 16 },
+  fieldGroup: { marginBottom: 14 },
   label: {
+    fontFamily: Fonts.semiBold,
     fontSize: 13,
-    fontWeight: '600',
     color: '#1B2D24',
-    marginBottom: 8,
-    letterSpacing: 0.2,
+    marginBottom: 6,
+    letterSpacing: 0.1,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AgreGreen.inputBg,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: AgreGreen.inputBorder,
+    borderColor: '#E2E2E2',
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 52,
@@ -113,6 +105,7 @@ export const styles = StyleSheet.create({
   inputIcon: { marginRight: 10 },
   input: {
     flex: 1,
+    fontFamily: Fonts.regular,
     fontSize: 15,
     color: '#1B2D24',
   },
@@ -123,8 +116,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 2,
-    marginBottom: 24,
+    marginTop: 4,
+    marginBottom: 22,
   },
   checkRow: {
     flexDirection: 'row',
@@ -134,9 +127,9 @@ export const styles = StyleSheet.create({
   checkbox: {
     width: 18,
     height: 18,
-    borderRadius: 5,
+    borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: AgreGreen.brand,
+    borderColor: '#CCCCCC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -145,36 +138,37 @@ export const styles = StyleSheet.create({
     borderColor: AgreGreen.button,
   },
   checkLabel: {
+    fontFamily: Fonts.regular,
     fontSize: 13,
-    color: AgreGreen.muted,
+    color: '#555555',
   },
   forgotText: {
+    fontFamily: Fonts.semiBold,
     fontSize: 13,
     color: AgreGreen.button,
-    fontWeight: '600',
   },
 
   // ── Botão Entrar ───────────────────────────────
   button: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#111111',
     borderRadius: 14,
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   buttonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   buttonText: {
+    fontFamily: Fonts.bold,
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
     letterSpacing: 0.5,
   },
 
@@ -184,55 +178,15 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
-    marginBottom: 24,
   },
   bottomText: {
+    fontFamily: Fonts.regular,
     fontSize: 14,
-    color: AgreGreen.muted,
+    color: '#888888',
   },
   bottomLink: {
+    fontFamily: Fonts.bold,
     fontSize: 14,
     color: AgreGreen.button,
-    fontWeight: '700',
-  },
-
-  // ── Divisor ────────────────────────────────────
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E8E8E8',
-  },
-  dividerText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#AAAAAA',
-    letterSpacing: 1.4,
-  },
-
-  // ── Botão Demo ─────────────────────────────────
-  demoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: '#E0E0E0',
-    borderRadius: 14,
-    height: 52,
-    backgroundColor: '#fff',
-  },
-  demoBtnPressed: {
-    backgroundColor: '#F8F8F8',
-  },
-  demoBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#444',
   },
 });

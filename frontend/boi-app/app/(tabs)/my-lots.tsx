@@ -309,6 +309,7 @@ export default function MyLotsScreen() {
             renderItem={renderFavoriteCard}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            overScrollMode="always"
           />
         )
       ) : (
@@ -361,6 +362,7 @@ export default function MyLotsScreen() {
               renderItem={renderCard}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
+              overScrollMode="always"
             />
           )}
         </View>

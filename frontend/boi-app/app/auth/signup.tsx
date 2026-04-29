@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   Switch,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -44,6 +45,13 @@ export default function SignupScreen() {
   const [selectedUf, setSelectedUf]                 = useState('');
   const [regionOpen, setRegionOpen]                 = useState(false);
   const [loading, setLoading]                       = useState(false);
+
+  const lastNameRef        = useRef<TextInput>(null);
+  const emailRef           = useRef<TextInput>(null);
+  const passwordRef        = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
+  const phoneRef           = useRef<TextInput>(null);
+  const personDocRef       = useRef<TextInput>(null);
 
   const [errors, setErrors]       = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
@@ -121,14 +129,16 @@ export default function SignupScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
           style={styles.card}
           contentContainerStyle={styles.cardContent}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
+        <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
           {/* ── Logo ── */}
           <View style={styles.logoRow}>
             <View style={styles.logoBox}>
@@ -158,6 +168,9 @@ export default function SignupScreen() {
                   value={firstName}
                   onChangeText={v => { setFirstName(v); clearError('firstName'); }}
                   autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={() => lastNameRef.current?.focus()}
+                  submitBehavior="submit"
                 />
               </View>
               <FieldError message={errors.firstName} />
@@ -166,12 +179,16 @@ export default function SignupScreen() {
               <Text style={styles.label}>Sobrenome</Text>
               <View style={styles.inputRow}>
                 <TextInput
+                  ref={lastNameRef}
                   style={styles.input}
                   placeholder="Silva"
                   placeholderTextColor={AgreGreen.placeholder}
                   value={lastName}
                   onChangeText={v => { setLastName(v); clearError('lastName'); }}
                   autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailRef.current?.focus()}
+                  submitBehavior="submit"
                 />
               </View>
               <FieldError message={errors.lastName} />
@@ -184,6 +201,7 @@ export default function SignupScreen() {
             <View style={styles.inputRow}>
               <Ionicons name="mail-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
               <TextInput
+                ref={emailRef}
                 style={styles.input}
                 placeholder="seu@email.com"
                 placeholderTextColor={AgreGreen.placeholder}
@@ -192,6 +210,9 @@ export default function SignupScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                submitBehavior="submit"
               />
             </View>
             <FieldError message={errors.email} />
@@ -203,14 +224,18 @@ export default function SignupScreen() {
             <View style={styles.inputRow}>
               <Ionicons name="lock-closed-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
               <TextInput
+                ref={passwordRef}
                 style={styles.input}
                 placeholder="Mínimo 6 caracteres"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={password}
                 onChangeText={v => { setPassword(v); clearError('password'); }}
                 secureTextEntry={!showPassword}
+                returnKeyType="next"
+                onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                submitBehavior="submit"
               />
-              <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
+              <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn} hitSlop={12}>
                 <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.placeholder} />
               </Pressable>
             </View>
@@ -223,14 +248,18 @@ export default function SignupScreen() {
             <View style={styles.inputRow}>
               <Ionicons name="lock-closed-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
               <TextInput
+                ref={confirmPasswordRef}
                 style={styles.input}
                 placeholder="Repita a senha"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={confirmPassword}
                 onChangeText={v => { setConfirmPassword(v); clearError('confirmPassword'); }}
                 secureTextEntry={!showConfirmPassword}
+                returnKeyType="next"
+                onSubmitEditing={() => phoneRef.current?.focus()}
+                submitBehavior="submit"
               />
-              <Pressable onPress={() => setShowConfirmPassword(v => !v)} style={styles.eyeBtn}>
+              <Pressable onPress={() => setShowConfirmPassword(v => !v)} style={styles.eyeBtn} hitSlop={12}>
                 <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.placeholder} />
               </Pressable>
             </View>
@@ -243,12 +272,16 @@ export default function SignupScreen() {
             <View style={styles.inputRow}>
               <Ionicons name="call-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
               <TextInput
+                ref={phoneRef}
                 style={styles.input}
                 placeholder="(99) 99999-9999"
                 placeholderTextColor={AgreGreen.placeholder}
                 value={phone}
                 onChangeText={v => { setPhone(v); clearError('phone'); }}
                 keyboardType="phone-pad"
+                returnKeyType="next"
+                onSubmitEditing={() => personDocRef.current?.focus()}
+                submitBehavior="submit"
               />
             </View>
             <FieldError message={errors.phone} />
@@ -279,12 +312,15 @@ export default function SignupScreen() {
             <View style={styles.inputRow}>
               <Ionicons name="card-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
               <TextInput
+                ref={personDocRef}
                 style={styles.input}
                 placeholder={docType === 'CPF' ? '00000000000' : '00000000000000'}
                 placeholderTextColor={AgreGreen.placeholder}
                 value={personDoc}
                 onChangeText={v => { setPersonDoc(v); clearError('personDoc'); }}
                 keyboardType="numeric"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
               />
             </View>
             <FieldError message={errors.personDoc} />
@@ -391,6 +427,7 @@ export default function SignupScreen() {
               <Text style={styles.bottomLink}>Entrar</Text>
             </Pressable>
           </View>
+        </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

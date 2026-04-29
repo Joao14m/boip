@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -193,8 +195,10 @@ export default function CreateListingScreen() {
         <ScrollView
           contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
+          <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
           {/* ── Lote ── */}
           <Text style={{ fontSize: 18, fontWeight: '700', color: AgreGreen.dark, marginBottom: 16 }}>
             Dados do Lote
@@ -368,6 +372,7 @@ export default function CreateListingScreen() {
               </Text>
             </Pressable>
           </View>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

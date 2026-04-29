@@ -9,6 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -251,11 +254,15 @@ export default function ProfileScreen() {
         </View>
       ) : (
         /* ── Conta Tab ── */
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           style={styles.contaContainer}
           contentContainerStyle={styles.contaScroll}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
+          <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
           {loadingUser ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={AgreGreen.brand} />
@@ -465,7 +472,9 @@ export default function ProfileScreen() {
               </View>
             </>
           ) : null}
+          </Pressable>
         </ScrollView>
+        </KeyboardAvoidingView>
       )}
     </SafeAreaView>
   );
