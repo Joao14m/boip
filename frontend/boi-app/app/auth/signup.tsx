@@ -9,8 +9,11 @@ import {
   ScrollView,
   Switch,
   Keyboard,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -126,19 +129,40 @@ export default function SignupScreen() {
   const selectedRegion = REGIONS.find(r => r.uf === selectedUf);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StatusBar style="dark" />
+
+      {/* Glow: gradiente linear diagonal do canto superior esquerdo */}
+      <LinearGradient
+        colors={['rgba(82, 183, 136, 0.30)', 'rgba(82, 183, 136, 0.08)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.85, y: 0.75 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      {/* Glow: gradiente do canto inferior esquerdo */}
+      <LinearGradient
+        colors={['transparent', 'rgba(82, 183, 136, 0.10)', 'rgba(82, 183, 136, 0.25)']}
+        start={{ x: 0.6, y: 0.4 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          style={styles.card}
-          contentContainerStyle={styles.cardContent}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
-        <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+        <Pressable onPress={Keyboard.dismiss}>
+          <View style={styles.card}>
           {/* ── Logo ── */}
           <View style={styles.logoRow}>
             <View style={styles.logoBox}>
@@ -151,8 +175,8 @@ export default function SignupScreen() {
           <Text style={styles.subtitle}>Preencha os dados para se cadastrar</Text>
 
           {formError ? (
-            <View style={{ backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-              <Text style={{ color: '#C53030', fontSize: 13 }}>{formError}</Text>
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{formError}</Text>
             </View>
           ) : null}
 
@@ -164,7 +188,7 @@ export default function SignupScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="João"
-                  placeholderTextColor={AgreGreen.placeholder}
+                  placeholderTextColor={"#AAAAAA"}
                   value={firstName}
                   onChangeText={v => { setFirstName(v); clearError('firstName'); }}
                   autoCapitalize="words"
@@ -182,7 +206,7 @@ export default function SignupScreen() {
                   ref={lastNameRef}
                   style={styles.input}
                   placeholder="Silva"
-                  placeholderTextColor={AgreGreen.placeholder}
+                  placeholderTextColor={"#AAAAAA"}
                   value={lastName}
                   onChangeText={v => { setLastName(v); clearError('lastName'); }}
                   autoCapitalize="words"
@@ -199,12 +223,12 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>E-mail</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="mail-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
                 ref={emailRef}
                 style={styles.input}
                 placeholder="seu@email.com"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={email}
                 onChangeText={v => { setEmail(v); clearError('email'); }}
                 keyboardType="email-address"
@@ -222,12 +246,12 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Senha</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="lock-closed-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
                 ref={passwordRef}
                 style={styles.input}
                 placeholder="Mínimo 6 caracteres"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={password}
                 onChangeText={v => { setPassword(v); clearError('password'); }}
                 secureTextEntry={!showPassword}
@@ -236,7 +260,7 @@ export default function SignupScreen() {
                 submitBehavior="submit"
               />
               <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn} hitSlop={12}>
-                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.placeholder} />
+                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={"#AAAAAA"} />
               </Pressable>
             </View>
             <FieldError message={errors.password} />
@@ -246,12 +270,12 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Confirmar senha</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="lock-closed-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
                 ref={confirmPasswordRef}
                 style={styles.input}
                 placeholder="Repita a senha"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={confirmPassword}
                 onChangeText={v => { setConfirmPassword(v); clearError('confirmPassword'); }}
                 secureTextEntry={!showConfirmPassword}
@@ -260,7 +284,7 @@ export default function SignupScreen() {
                 submitBehavior="submit"
               />
               <Pressable onPress={() => setShowConfirmPassword(v => !v)} style={styles.eyeBtn} hitSlop={12}>
-                <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.placeholder} />
+                <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={"#AAAAAA"} />
               </Pressable>
             </View>
             <FieldError message={errors.confirmPassword} />
@@ -270,12 +294,12 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Telefone</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="call-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
+              <Ionicons name="call-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
                 ref={phoneRef}
                 style={styles.input}
                 placeholder="(99) 99999-9999"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={phone}
                 onChangeText={v => { setPhone(v); clearError('phone'); }}
                 keyboardType="phone-pad"
@@ -310,12 +334,12 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>{docType === 'CPF' ? 'CPF' : 'CNPJ'} (somente números)</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="card-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
+              <Ionicons name="card-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
                 ref={personDocRef}
                 style={styles.input}
                 placeholder={docType === 'CPF' ? '00000000000' : '00000000000000'}
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={personDoc}
                 onChangeText={v => { setPersonDoc(v); clearError('personDoc'); }}
                 keyboardType="numeric"
@@ -345,11 +369,11 @@ export default function SignupScreen() {
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Placa do veículo</Text>
               <View style={styles.inputRow}>
-                <Ionicons name="car-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
+                <Ionicons name="car-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="ABC-1234"
-                  placeholderTextColor={AgreGreen.placeholder}
+                  placeholderTextColor={"#AAAAAA"}
                   value={carNumber}
                   onChangeText={v => { setCarNumber(v); clearError('carNumber'); }}
                   autoCapitalize="characters"
@@ -366,14 +390,14 @@ export default function SignupScreen() {
               style={[styles.inputRow, errors.selectedUf ? { borderColor: '#E53E3E' } : null]}
               onPress={() => setRegionOpen(v => !v)}
             >
-              <Ionicons name="location-outline" size={20} color={AgreGreen.placeholder} style={styles.inputIcon} />
-              <Text style={[styles.input, !selectedRegion && { color: AgreGreen.placeholder }]}>
+              <Ionicons name="location-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
+              <Text style={[styles.input, !selectedRegion && { color: "#AAAAAA" }]}>
                 {selectedRegion ? `${selectedRegion.name} - ${selectedRegion.uf}` : 'Selecione uma região'}
               </Text>
               <Ionicons
                 name={regionOpen ? 'chevron-up' : 'chevron-down'}
                 size={18}
-                color={AgreGreen.placeholder}
+                color={"#AAAAAA"}
               />
             </Pressable>
 
@@ -426,6 +450,7 @@ export default function SignupScreen() {
             <Pressable onPress={() => router.replace('/auth/login')}>
               <Text style={styles.bottomLink}>Entrar</Text>
             </Pressable>
+          </View>
           </View>
         </Pressable>
         </ScrollView>

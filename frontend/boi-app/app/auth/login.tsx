@@ -88,6 +88,15 @@ export default function LoginScreen() {
         pointerEvents="none"
       />
 
+      {/* Glow: gradiente do canto inferior esquerdo */}
+      <LinearGradient
+        colors={['transparent', 'rgba(82, 183, 136, 0.10)', 'rgba(82, 183, 136, 0.25)']}
+        start={{ x: 0.6, y: 0.4 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

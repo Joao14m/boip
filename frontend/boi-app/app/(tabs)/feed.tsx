@@ -268,18 +268,18 @@ export default function FeedScreen() {
       {/* ── Header ── */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Ionicons name="storefront-outline" size={22} color={AgreGreen.dark} />
+          <View style={styles.logoGlow} />
+          <View style={styles.logoBox}>
+            <Ionicons name="storefront" size={22} color="#fff" />
+          </View>
           <View style={styles.headerBrandGroup}>
             <Text style={styles.headerBrand}>BoiMarket</Text>
             <Text style={styles.headerSub}>Compra e venda de gado</Text>
           </View>
         </View>
         <View style={styles.headerRight}>
-          <Pressable style={styles.userBtn} onPress={() => router.push('/(tabs)/profile')}>
-            <Ionicons name="person-outline" size={18} color="#555" />
-          </Pressable>
           <Pressable style={styles.createBtn} onPress={() => router.push('/listing/create')}>
-            <Ionicons name="add" size={16} color="#fff" />
+            <Ionicons name="add" size={18} color="#fff" />
             <Text style={styles.createBtnText}>Criar Anúncio</Text>
           </Pressable>
         </View>

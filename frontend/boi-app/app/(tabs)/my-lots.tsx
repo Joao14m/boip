@@ -236,7 +236,16 @@ export default function MyLotsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Meus Lotes</Text>
+        <View style={styles.headerLeft}>
+          <View style={styles.logoGlow} />
+          <View style={styles.logoBox}>
+            <Ionicons name="folder" size={22} color="#fff" />
+          </View>
+          <View style={styles.headerBrandGroup}>
+            <Text style={styles.headerBrand}>Meus Lotes</Text>
+            <Text style={styles.headerSub}>Gerencie seus anúncios e favoritos</Text>
+          </View>
+        </View>
       </View>
 
       {/* ── Sub-tab Switcher ── */}
@@ -248,20 +257,12 @@ export default function MyLotsScreen() {
           <Ionicons
             name="heart-outline"
             size={16}
-            color={activeTab === 'favoritos' ? AgreGreen.dark : '#888'}
+            color={activeTab === 'favoritos' ? '#1B2D24' : '#666'}
           />
           <Text
             style={[styles.tabText, activeTab === 'favoritos' && styles.tabTextActive]}
           >
-            Favoritos
-          </Text>
-          <Text
-            style={[
-              styles.tabCount,
-              activeTab !== 'favoritos' && styles.tabCountInactive,
-            ]}
-          >
-            {favorites.length}
+            Favoritos ({favorites.length})
           </Text>
         </Pressable>
         <Pressable
@@ -271,20 +272,12 @@ export default function MyLotsScreen() {
           <Ionicons
             name="folder-outline"
             size={16}
-            color={activeTab === 'meus' ? AgreGreen.dark : '#888'}
+            color={activeTab === 'meus' ? '#1B2D24' : '#666'}
           />
           <Text
             style={[styles.tabText, activeTab === 'meus' && styles.tabTextActive]}
           >
-            Meus Lotes
-          </Text>
-          <Text
-            style={[
-              styles.tabCount,
-              activeTab !== 'meus' && styles.tabCountInactive,
-            ]}
-          >
-            {myListings.length}
+            Meus Lotes ({myListings.length})
           </Text>
         </Pressable>
       </View>

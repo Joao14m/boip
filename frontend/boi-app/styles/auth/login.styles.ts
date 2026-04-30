@@ -45,6 +45,11 @@ export const styles = StyleSheet.create({
     backgroundColor: AgreGreen.button,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: AgreGreen.brand,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoText: {
     fontFamily: Fonts.extraBold,

@@ -161,8 +161,8 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-          <View style={{ alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, backgroundColor: sc.bg }}>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: sc.text }}>{statusLabel[item.status] ?? item.status}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
+            <Text style={[styles.statusText, { color: sc.text }]}>{statusLabel[item.status] ?? item.status}</Text>
           </View>
         </View>
       </View>
@@ -174,8 +174,9 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* ── Header ── */}
       <View style={styles.header}>
+        <View style={styles.avatarGlow} />
         <View style={styles.avatar}>
-          <Ionicons name="person-outline" size={32} color="#fff" />
+          <Ionicons name="person" size={30} color="#fff" />
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>

@@ -1,19 +1,42 @@
 import { StyleSheet } from 'react-native';
-import { AgreGreen } from '@/constants/theme';
+import { AgreGreen, Fonts } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
+  // ── Fundo ──────────────────────────────────────
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   flex: { flex: 1 },
 
-  // Logo row (same as login)
+  // ── ScrollView ─────────────────────────────────
+  scroll: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 32,
+  },
+
+  // ── Card ───────────────────────────────────────
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
+  },
+
+  // ── Logo ───────────────────────────────────────
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 28,
+    marginBottom: 24,
   },
   logoBox: {
     width: 44,
@@ -22,37 +45,50 @@ export const styles = StyleSheet.create({
     backgroundColor: AgreGreen.button,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: AgreGreen.brand,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoText: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontFamily: Fonts.extraBold,
+    fontSize: 20,
     color: AgreGreen.dark,
     letterSpacing: 0.3,
   },
 
-  // Card (ScrollView)
-  card: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  cardContent: {
-    paddingHorizontal: 28,
-    paddingTop: 48,
-    paddingBottom: 60,
-  },
+  // ── Títulos ────────────────────────────────────
   welcome: {
+    fontFamily: Fonts.extraBold,
     fontSize: 26,
-    fontWeight: '800',
-    color: AgreGreen.dark,
+    color: '#0F1C15',
     marginBottom: 6,
   },
   subtitle: {
+    fontFamily: Fonts.regular,
     fontSize: 14,
     color: AgreGreen.muted,
-    marginBottom: 26,
+    lineHeight: 20,
+    marginBottom: 24,
   },
 
-  // Layout helpers
+  // ── Banner de erro ─────────────────────────────
+  errorBanner: {
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FED7D7',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+  errorBannerText: {
+    fontFamily: Fonts.regular,
+    color: '#C53030',
+    fontSize: 13,
+  },
+
+  // ── Layout helpers ─────────────────────────────
   row: {
     flexDirection: 'row',
     gap: 12,
@@ -61,34 +97,35 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Inputs
-  fieldGroup: { marginBottom: 18 },
+  // ── Inputs ─────────────────────────────────────
+  fieldGroup: { marginBottom: 14 },
   label: {
+    fontFamily: Fonts.semiBold,
     fontSize: 13,
-    fontWeight: '600',
     color: '#1B2D24',
-    marginBottom: 8,
-    letterSpacing: 0.2,
+    marginBottom: 6,
+    letterSpacing: 0.1,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AgreGreen.inputBg,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: AgreGreen.inputBorder,
-    borderRadius: 14,
+    borderColor: '#E2E2E2',
+    borderRadius: 12,
     paddingHorizontal: 14,
-    height: 54,
+    height: 52,
   },
   inputIcon: { marginRight: 10 },
   input: {
     flex: 1,
+    fontFamily: Fonts.regular,
     fontSize: 15,
     color: '#1B2D24',
   },
   eyeBtn: { padding: 4 },
 
-  // CPF / CNPJ toggle
+  // ── CPF / CNPJ toggle ──────────────────────────
   toggleRow: {
     flexDirection: 'row',
     gap: 10,
@@ -98,44 +135,51 @@ export const styles = StyleSheet.create({
     height: 46,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: AgreGreen.inputBorder,
-    backgroundColor: AgreGreen.inputBg,
+    borderColor: '#E2E2E2',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   toggleBtnActive: {
     backgroundColor: AgreGreen.button,
     borderColor: AgreGreen.button,
+    shadowColor: AgreGreen.brand,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   toggleText: {
+    fontFamily: Fonts.semiBold,
     fontSize: 14,
-    fontWeight: '600',
     color: AgreGreen.muted,
   },
   toggleTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
 
-  // Switch row
+  // ── Switch row ─────────────────────────────────
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   switchHint: {
+    fontFamily: Fonts.regular,
     fontSize: 12,
-    color: AgreGreen.placeholder,
+    color: '#888888',
     marginTop: 2,
   },
 
-  // Location dropdown
+  // ── Location dropdown ──────────────────────────
   locationDropdown: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginTop: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginTop: 6,
     borderWidth: 1,
     borderColor: '#ECECEC',
-    maxHeight: 200,
+    maxHeight: 240,
+    overflow: 'hidden',
   },
   locationOption: {
     flexDirection: 'row',
@@ -148,125 +192,58 @@ export const styles = StyleSheet.create({
   },
   locationOptionText: {
     flex: 1,
+    fontFamily: Fonts.regular,
     fontSize: 14,
-    color: AgreGreen.dark,
+    color: '#1B2D24',
   },
   locationOptionActive: {
     backgroundColor: AgreGreen.pale,
   },
   locationOptionTextActive: {
+    fontFamily: Fonts.semiBold,
     color: AgreGreen.dark,
-    fontWeight: '600',
   },
 
-  // Modal de localização
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ECECEC',
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1B2D24',
-  },
-  modalCloseBtn: {
-    padding: 4,
-  },
-  modalSearchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 46,
-    gap: 8,
-  },
-  modalSearchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: '#1B2D24',
-  },
-  modalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  modalOptionActive: {
-    backgroundColor: AgreGreen.pale,
-  },
-  modalOptionText: {
-    flex: 1,
-    fontSize: 15,
-    color: '#1B2D24',
-  },
-  modalOptionTextActive: {
-    color: AgreGreen.dark,
-    fontWeight: '600',
-  },
-  modalEmpty: {
-    alignItems: 'center',
-    paddingTop: 48,
-    gap: 12,
-  },
-  modalEmptyText: {
-    fontSize: 14,
-    color: AgreGreen.muted,
-    textAlign: 'center',
-  },
-
-  // Button
+  // ── Botão Criar Conta ──────────────────────────
   button: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 16,
-    height: 56,
+    backgroundColor: '#111111',
+    borderRadius: 14,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 5,
     marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   buttonPressed: {
-    opacity: 0.88,
+    opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
+    color: '#FFFFFF',
+    fontSize: 16,
     letterSpacing: 0.5,
   },
 
-  // Bottom link
+  // ── Link login ─────────────────────────────────
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 20,
   },
   bottomText: {
+    fontFamily: Fonts.regular,
     fontSize: 14,
-    color: AgreGreen.muted,
+    color: '#888888',
   },
   bottomLink: {
+    fontFamily: Fonts.bold,
     fontSize: 14,
     color: AgreGreen.button,
-    fontWeight: '700',
   },
 });
