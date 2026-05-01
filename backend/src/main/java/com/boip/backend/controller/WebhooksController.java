@@ -23,6 +23,7 @@ import com.boip.backend.service.WebhooksService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.server.ResponseStatusException;
 
 @Validated
 @Slf4j
@@ -32,6 +33,34 @@ import org.springframework.validation.annotation.Validated;
 public class WebhooksController {
     private final WebhooksService webhooksService;
     private final WebhookTokenVerifier tokenVerifier;
+
+    @GetMapping
+    public ResponseEntity<WebhookConfigListResponseDto> listWebhooks(
+            @RequestHeader(value = "asaas-access-token", required = false) String accessToken) {
+        requireAdminToken(accessToken);
+        return ResponseEntity.ok(webhooksService.listWebhooks());
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<WebhookConfigGetResponseDto> registerWebhook(
+            @RequestHeader(value = "asaas-access-token", required = false) String accessToken) {
+        requireAdminToken(accessToken);
+        return ResponseEntity.ok(webhooksService.registerWebhook());
+    }
+
+    @DeleteMapping("/{webhookId}")
+    public ResponseEntity<WebhookConfigDeleteResponseDto> deleteWebhook(
+            @PathVariable String webhookId,
+            @RequestHeader(value = "asaas-access-token", required = false) String accessToken) {
+        requireAdminToken(accessToken);
+        return ResponseEntity.ok(webhooksService.deleteWebhook(webhookId));
+    }
+
+    private void requireAdminToken(String token) {
+        if (!tokenVerifier.verify(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin token");
+        }
+    }
 
     @PostMapping("/asaas")
     public ResponseEntity<Void> handleAsaasEvent(

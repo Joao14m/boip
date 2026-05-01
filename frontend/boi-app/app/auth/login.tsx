@@ -118,7 +118,7 @@ export default function LoginScreen() {
                 <View style={styles.logoBox}>
                   <Ionicons name="storefront" size={22} color="#fff" />
                 </View>
-                <Text style={styles.logoText}>BoiMarket</Text>
+                <Text style={styles.logoText}>Agregis</Text>
               </View>
 
               <Text style={styles.welcome}>Bem-vindo de volta</Text>

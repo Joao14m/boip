@@ -279,7 +279,7 @@ export default function ProfileScreen() {
                       Gerencie suas informacoes pessoais
                     </Text>
                   </View>
-                  {!editing ? (
+                  {!editing && (
                     <Pressable style={styles.editBtn} onPress={() => {
                       setEditForm({
                         firstName: user.firstName ?? '',
@@ -293,23 +293,6 @@ export default function ProfileScreen() {
                       <Ionicons name="create-outline" size={14} color="#fff" />
                       <Text style={styles.editBtnText}>Editar</Text>
                     </Pressable>
-                  ) : (
-                    <View style={{ flexDirection: 'row', gap: 8 }}>
-                      <Pressable style={[styles.editBtn, { backgroundColor: '#ccc' }]} onPress={() => setEditing(false)}>
-                        <Text style={styles.editBtnText}>Cancelar</Text>
-                      </Pressable>
-                      <Pressable style={styles.editBtn} onPress={async () => {
-                        try {
-                          const updated = await api.patch<any>(`/api/users/${userId}`, editForm);
-                          setUser(updated);
-                          setEditing(false);
-                        } catch (e: any) {
-                          Alert.alert('Erro', e.message);
-                        }
-                      }}>
-                        <Text style={styles.editBtnText}>Salvar</Text>
-                      </Pressable>
-                    </View>
                   )}
                 </View>
 
@@ -371,6 +354,28 @@ export default function ProfileScreen() {
                           keyboardType="numeric"
                         />
                       </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+                      <Pressable
+                        style={[styles.editBtn, { flex: 1, backgroundColor: '#ccc', justifyContent: 'center' }]}
+                        onPress={() => setEditing(false)}
+                      >
+                        <Text style={styles.editBtnText}>Cancelar</Text>
+                      </Pressable>
+                      <Pressable
+                        style={[styles.editBtn, { flex: 1, justifyContent: 'center' }]}
+                        onPress={async () => {
+                          try {
+                            const updated = await api.patch<any>(`/api/users/${userId}`, editForm);
+                            setUser(updated);
+                            setEditing(false);
+                          } catch (e: any) {
+                            Alert.alert('Erro', e.message);
+                          }
+                        }}
+                      >
+                        <Text style={styles.editBtnText}>Salvar</Text>
+                      </Pressable>
                     </View>
                   </>
                 ) : (

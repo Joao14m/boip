@@ -29,6 +29,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/auth/me").permitAll()
                         // Asaas webhook callback — authenticated via shared-secret header, not Firebase.
                         .requestMatchers(HttpMethod.POST, "/api/webhooks/asaas").permitAll()
+                        // Webhook management — called by start.py at startup; authenticated via shared-secret header.
+                        .requestMatchers(HttpMethod.GET,    "/api/webhooks").permitAll()
+                        .requestMatchers(HttpMethod.POST,   "/api/webhooks/register").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/webhooks/*").permitAll()
                         // Everything else (listings feed, locations, user lookups, etc.) requires login.
                         .anyRequest().authenticated()
                 )
