@@ -4,18 +4,18 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
+import com.boip.backend.dto.ListingPatchRequestDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.PageResponseDto;
 import com.boip.backend.dto.StatusUpdateRequestDto;
-import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.ListingService;
+
+import static com.boip.backend.auth.SecurityUtils.requireAppUser;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -34,7 +34,7 @@ public class ListingController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ListingResponseDto create(@Valid @RequestBody ListingRequestDto req) {
-        return listingService.create(req);
+        return listingService.create(req, requireAppUser());
     }
 
     @GetMapping("/{id}")
@@ -49,11 +49,18 @@ public class ListingController {
             @RequestParam(required = false) UUID lotId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
         if (sellerUserId != null) return listingService.findBySeller(sellerUserId, page, size);
         if (lotId != null) return listingService.findByLot(lotId, page, size);
         String effectiveStatus = (status != null && !status.isBlank()) ? status.toUpperCase() : "ACTIVE";
         return listingService.findByStatus(effectiveStatus, page, size);
+    }
+
+    @PatchMapping("/{id}")
+    public ListingResponseDto patch(
+            @PathVariable UUID id,
+            @Valid @RequestBody ListingPatchRequestDto req) {
+        return listingService.patch(id, req, requireAppUser());
     }
 
     @PatchMapping("/{id}/status")
@@ -89,9 +96,4 @@ public class ListingController {
         listingService.removeMedia(mediaId, requireAppUser());
     }
 
-    private AppUser requireAppUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof AppUser u) return u;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
-    }
 }

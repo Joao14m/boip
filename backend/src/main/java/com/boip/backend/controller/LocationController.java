@@ -36,10 +36,4 @@ public class LocationController {
     public LocationResponseDto findById(@PathVariable UUID id) {
         return locationService.findById(id);
     }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public LocationResponseDto create(@Valid @RequestBody LocationRequestDto req) {
-        return locationService.create(req);
-    }
 }

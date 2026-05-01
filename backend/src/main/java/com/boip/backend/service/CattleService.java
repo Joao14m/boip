@@ -37,16 +37,17 @@ public class CattleService {
     private final CattleLotRepository cattleRepository;
     private final CattleLotProfileRepository profileRepository;
 
-    public CattleLotResponseDto createLot(CattleLotCreateRequestDto req) {
+    public CattleLotResponseDto createLot(CattleLotCreateRequestDto req, AppUser caller) {
         String lotCode = req.getLotCode().trim();
 
-        if (cattleRepository.existsByOwnerUserIdAndLotCode(req.getOwnerUserId(), lotCode))
+        // Remove this? 
+        if (cattleRepository.existsByOwnerUserIdAndLotCode(caller.getId(), lotCode))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Lot Code already exists");
 
         OffsetDateTime now = OffsetDateTime.now();
 
         CattleLot cattleEntity = CattleLot.builder()
-                .ownerUserId(req.getOwnerUserId())
+                .ownerUserId(caller.getId())
                 .lotCode(lotCode)
                 .headCount(req.getHeadCount())
                 .locationId(req.getLocationId())

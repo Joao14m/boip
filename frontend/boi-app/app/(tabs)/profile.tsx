@@ -316,6 +316,25 @@ export default function ProfileScreen() {
                 {editing ? (
                   <>
                     <View style={styles.infoRow}>
+                      <View style={[styles.infoField, { flex: 1 }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={styles.infoLabel}>Email</Text>
+                          <Ionicons name="lock-closed" size={12} color={AgreGreen.muted} />
+                        </View>
+                        <Text
+                          style={[
+                            styles.infoValue,
+                            { color: AgreGreen.muted, paddingVertical: 4 },
+                          ]}
+                        >
+                          {user.email}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: AgreGreen.muted, marginTop: 2 }}>
+                          Email não pode ser alterado aqui.
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.infoRow}>
                       <View style={[styles.infoField, styles.infoHalf]}>
                         <Text style={styles.infoLabel}>Nome</Text>
                         <TextInput

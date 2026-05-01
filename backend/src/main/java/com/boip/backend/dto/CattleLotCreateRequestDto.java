@@ -15,9 +15,6 @@ import lombok.*;
 @Getter @Setter
 @Builder
 public class CattleLotCreateRequestDto {
-    @NotNull
-    UUID ownerUserId; 
-
     @NotBlank @Size(max=60)
     String lotCode;
 

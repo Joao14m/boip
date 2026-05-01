@@ -8,8 +8,9 @@ import com.boip.backend.dto.CattleLotProfileResponseDto;
 import com.boip.backend.dto.CattleLotResponseDto;
 import com.boip.backend.dto.CattleLotUpdateRequestDto;
 import com.boip.backend.dto.PageResponseDto;
-import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.CattleService;
+
+import static com.boip.backend.auth.SecurityUtils.requireAppUser;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -25,14 +26,12 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 @Validated
 @RestController
@@ -44,7 +43,7 @@ public class CattleController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CattleLotResponseDto createLot(@Valid @RequestBody CattleLotCreateRequestDto req) {
-        return cattleService.createLot(req);
+        return cattleService.createLot(req, requireAppUser());
     }
 
     @GetMapping("/{id}")
@@ -60,7 +59,7 @@ public class CattleController {
                                                 @RequestParam(required = false) String sort,
                                                 @RequestParam(required = false) String direction,
                                                 @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+                                                @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
         return cattleService.filter(locationId, uf, municipality, sort, direction, page, size);
     }
 
@@ -92,9 +91,4 @@ public class CattleController {
         return cattleService.getProfileHistory(id);
     }
 
-    private AppUser requireAppUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof AppUser u) return u;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
-    }
 }

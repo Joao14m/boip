@@ -1,6 +1,7 @@
 package com.boip.backend.service;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class PaymentService {
     private final AsaasSdk asaasSdk;
     private final ListingRepository listingRepository;
     private final AppUserRepository appUserRepository;
+    private final AuditService auditService;
 
     public PaymentGetResponseDto createCharge(UUID listingId, AppUser buyer){
         Listing listing = listingRepository.findById(listingId)
@@ -35,6 +37,10 @@ public class PaymentService {
 
         if (!"ACTIVE".equals(listing.getStatus())) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Listing is not active");
+        }
+
+        if (buyer.getId().equals(listing.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot buy your own listing");
         }
 
         try {
@@ -46,11 +52,10 @@ public class PaymentService {
                     .cpfCnpj(buyer.getPersonDoc())
                     .build();
 
-                log.info("Creating Asaas customer: name={}, email={}, phone={}, cpfCnpj={}",
-                    customerRequest.getName(), customerRequest.getEmail(),
-                    customerRequest.getMobilePhone(), customerRequest.getCpfCnpj());
+                log.info("Creating Asaas customer for buyerId={}", buyer.getId());
 
                 String asaasId = asaasSdk.customer.createNewCustomer(customerRequest).getId();
+                log.info("Asaas customer created: buyerId={} asaasId={}", buyer.getId(), asaasId);
                 buyer.setAsaasCustomerId(asaasId);
                 appUserRepository.save(buyer);
             }
@@ -66,7 +71,10 @@ public class PaymentService {
             log.info("Creating Asaas payment: customer={}, value={}, dueDate={}, externalRef={}",
                 request.getCustomer(), request.getValue(), request.getDueDate(), request.getExternalReference());
 
-            return asaasSdk.payment.createNewPayment(request);
+            PaymentGetResponseDto created = asaasSdk.payment.createNewPayment(request);
+            auditService.record(buyer.getId(), "PAYMENT_CHARGE_CREATED", listingId,
+                    Map.of("amount", listing.getPriceAmount(), "asaasPaymentId", created.getId()));
+            return created;
         } catch (com.asaas.apisdk.exceptions.ErrorResponseDtoException e) {
             var errors = e.getError().getErrors();
             if (errors != null) {
@@ -81,7 +89,33 @@ public class PaymentService {
         }
     }
 
-    public PaymentBillingInfoResponseDto retrieveBilling(String chargeId){
+    public PaymentBillingInfoResponseDto retrieveBilling(String chargeId, AppUser caller){
+        // 1) Fetch the charge itself to get externalReference + customer
+        PaymentGetResponseDto charge;
+        try {
+            charge = asaasSdk.payment.retrieveASinglePayment(chargeId); // or whatever the SDK name is
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Charge not found: " + chargeId);
+        }
+
+        // 2) Resolve the listing via externalReference
+        UUID listingId;
+        try {
+            listingId = UUID.fromString(charge.getExternalReference());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Charge not linked to a listing");
+        }
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Listing not found"));
+
+        // 3) Authorize: caller is either the seller or the buyer
+        boolean isSeller = caller.getId().equals(listing.getSellerUserId());
+        boolean isBuyer  = caller.getAsaasCustomerId() != null
+                            && caller.getAsaasCustomerId().equals(charge.getCustomer());
+        if (!isSeller && !isBuyer) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your charge");
+        }
+
         return asaasSdk.payment.retrievePaymentBillingInformation(chargeId);
     }
 }

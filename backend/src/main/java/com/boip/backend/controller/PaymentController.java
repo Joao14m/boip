@@ -3,19 +3,18 @@ package com.boip.backend.controller;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.asaas.apisdk.models.PaymentBillingInfoResponseDto;
 import com.asaas.apisdk.models.PaymentGetResponseDto;
-import com.boip.backend.entity.AppUser;
 import com.boip.backend.service.PaymentService;
+
+import static com.boip.backend.auth.SecurityUtils.requireAppUser;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -38,12 +37,7 @@ public class PaymentController {
     // Endpoints if the frontend needs to display payment instructions to the buyer after the charge is created
     @GetMapping("/{chargeId}")
     public PaymentBillingInfoResponseDto getBillingStatus(@PathVariable String chargeId){
-        return paymentService.retrieveBilling(chargeId);
+        return paymentService.retrieveBilling(chargeId, requireAppUser());
     }
 
-    private AppUser requireAppUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof AppUser u) return u;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
-    }
 }

@@ -31,6 +31,7 @@ services:
 
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       FIREBASE_SERVICE_ACCOUNT: file:/run/secrets/firebase-service-account.json
+      SPRING_PROFILES_ACTIVE: prod
     volumes:
       - ./secrets/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
     ports:
