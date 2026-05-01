@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,12 @@ import {
   Platform,
   ScrollView,
   Switch,
+  Keyboard,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -20,48 +24,49 @@ import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/signup.styles';
 import { FieldError } from '@/components/FieldError';
 
-type Location = { id: string; uf: string; municipality: string };
+const REGIONS = [
+  { uf: 'RJ', name: 'Rio de Janeiro' },
+  { uf: 'SP', name: 'São Paulo' },
+  { uf: 'MG', name: 'Minas Gerais' },
+];
 
 export default function SignupScreen() {
   const { refreshMe } = useAuth();
 
-  const [firstName, setFirstName]               = useState('');
-  const [lastName, setLastName]                 = useState('');
-  const [email, setEmail]                       = useState('');
-  const [password, setPassword]                 = useState('');
-  const [confirmPassword, setConfirmPassword]   = useState('');
-  const [showPassword, setShowPassword]         = useState(false);
+  const [firstName, setFirstName]                   = useState('');
+  const [lastName, setLastName]                     = useState('');
+  const [email, setEmail]                           = useState('');
+  const [password, setPassword]                     = useState('');
+  const [confirmPassword, setConfirmPassword]       = useState('');
+  const [showPassword, setShowPassword]             = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [phone, setPhone]                       = useState('');
-  const [personDoc, setPersonDoc]               = useState('');
-  const [docType, setDocType]                   = useState<'CPF' | 'CNPJ'>('CPF');
-  const [hasCar, setHasCar]                     = useState(false);
-  const [carNumber, setCarNumber]               = useState('');
-  const [locationId, setLocationId]             = useState('');
-  const [locations, setLocations]               = useState<Location[]>([]);
-  const [locationQuery, setLocationQuery]       = useState('');
-  const [loading, setLoading]                   = useState(false);
+  const [phone, setPhone]                           = useState('');
+  const [personDoc, setPersonDoc]                   = useState('');
+  const [docType, setDocType]                       = useState<'CPF' | 'CNPJ'>('CPF');
+  const [hasCar, setHasCar]                         = useState(false);
+  const [carNumber, setCarNumber]                   = useState('');
+  const [selectedUf, setSelectedUf]                 = useState('');
+  const [regionOpen, setRegionOpen]                 = useState(false);
+  const [loading, setLoading]                       = useState(false);
+
+  const lastNameRef        = useRef<TextInput>(null);
+  const emailRef           = useRef<TextInput>(null);
+  const passwordRef        = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
+  const phoneRef           = useRef<TextInput>(null);
+  const personDocRef       = useRef<TextInput>(null);
 
   const [errors, setErrors]       = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
 
-  useEffect(() => {
-    api.get<Location[]>('/api/locations').then(setLocations).catch(() => {});
-  }, []);
-
-  const filteredLocations = useMemo(() => {
-    if (!locationQuery.trim()) return [];
-    const q = locationQuery.toLowerCase();
-    return locations
-      .filter(l => l.municipality.toLowerCase().includes(q) || l.uf.toLowerCase().includes(q))
-      .sort((a, b) => a.municipality.localeCompare(b.municipality))
-      .slice(0, 5);
-  }, [locations, locationQuery]);
-
-  const selectedLocation = locations.find(l => l.id === locationId);
-
   const clearError = (field: string) =>
     setErrors(prev => ({ ...prev, [field]: '' }));
+
+  const handleSelectRegion = (uf: string) => {
+    setSelectedUf(uf);
+    setRegionOpen(false);
+    clearError('selectedUf');
+  };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -69,13 +74,13 @@ export default function SignupScreen() {
     if (!firstName.trim()) e.firstName = 'Nome é obrigatório.';
     if (!lastName.trim())  e.lastName  = 'Sobrenome é obrigatório.';
 
-    if (!email.trim())          e.email = 'E-mail é obrigatório.';
+    if (!email.trim())           e.email = 'E-mail é obrigatório.';
     else if (!email.includes('@')) e.email = 'E-mail inválido.';
 
-    if (!password)               e.password = 'Senha é obrigatória.';
+    if (!password)                e.password = 'Senha é obrigatória.';
     else if (password.length < 6) e.password = 'Senha deve ter pelo menos 6 caracteres.';
 
-    if (!confirmPassword)              e.confirmPassword = 'Confirme a senha.';
+    if (!confirmPassword)               e.confirmPassword = 'Confirme a senha.';
     else if (password !== confirmPassword) e.confirmPassword = 'As senhas não coincidem.';
 
     if (!phone.trim()) e.phone = 'Telefone é obrigatório.';
@@ -89,7 +94,7 @@ export default function SignupScreen() {
 
     if (hasCar && !carNumber.trim()) e.carNumber = 'Placa é obrigatória quando possui veículo.';
 
-    if (!locationId) e.locationId = 'Selecione uma localização.';
+    if (!selectedUf) e.selectedUf = 'Selecione uma região.';
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -110,7 +115,7 @@ export default function SignupScreen() {
         docType,
         hasCar,
         carNumber: hasCar ? carNumber.trim() : null,
-        locationId,
+        uf: selectedUf,
       });
       await refreshMe();
       router.replace('/(tabs)/feed');
@@ -121,35 +126,57 @@ export default function SignupScreen() {
     }
   };
 
+  const selectedRegion = REGIONS.find(r => r.uf === selectedUf);
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StatusBar style="dark" />
+
+      {/* Glow: gradiente linear diagonal do canto superior esquerdo */}
+      <LinearGradient
+        colors={['rgba(82, 183, 136, 0.30)', 'rgba(82, 183, 136, 0.08)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.85, y: 0.75 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      {/* Glow: gradiente do canto inferior esquerdo */}
+      <LinearGradient
+        colors={['transparent', 'rgba(82, 183, 136, 0.10)', 'rgba(82, 183, 136, 0.25)']}
+        start={{ x: 0.6, y: 0.4 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* ── Header ── */}
-        <View style={styles.header}>
-          <View style={styles.circle1} />
-          <View style={styles.circle2} />
-          <View style={styles.circle3} />
-          <Text style={styles.headerBrand}>Agregis</Text>
-          <Text style={styles.cattleEmoji}>🐄</Text>
-        </View>
-
-        {/* ── Card ── */}
         <ScrollView
-          style={styles.card}
-          contentContainerStyle={styles.cardContent}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
+        <Pressable onPress={Keyboard.dismiss}>
+          <View style={styles.card}>
+          {/* ── Logo ── */}
+          <View style={styles.logoRow}>
+            <View style={styles.logoBox}>
+              <Ionicons name="storefront" size={22} color="#fff" />
+            </View>
+            <Text style={styles.logoText}>BoiMarket</Text>
+          </View>
+
           <Text style={styles.welcome}>Criar conta</Text>
           <Text style={styles.subtitle}>Preencha os dados para se cadastrar</Text>
 
-          {/* Banner de erro do servidor */}
           {formError ? (
-            <View style={{ backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-              <Text style={{ color: '#C53030', fontSize: 13 }}>{formError}</Text>
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{formError}</Text>
             </View>
           ) : null}
 
@@ -161,10 +188,13 @@ export default function SignupScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="João"
-                  placeholderTextColor={AgreGreen.placeholder}
+                  placeholderTextColor={"#AAAAAA"}
                   value={firstName}
                   onChangeText={v => { setFirstName(v); clearError('firstName'); }}
                   autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={() => lastNameRef.current?.focus()}
+                  submitBehavior="submit"
                 />
               </View>
               <FieldError message={errors.firstName} />
@@ -173,12 +203,16 @@ export default function SignupScreen() {
               <Text style={styles.label}>Sobrenome</Text>
               <View style={styles.inputRow}>
                 <TextInput
+                  ref={lastNameRef}
                   style={styles.input}
                   placeholder="Silva"
-                  placeholderTextColor={AgreGreen.placeholder}
+                  placeholderTextColor={"#AAAAAA"}
                   value={lastName}
                   onChangeText={v => { setLastName(v); clearError('lastName'); }}
                   autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailRef.current?.focus()}
+                  submitBehavior="submit"
                 />
               </View>
               <FieldError message={errors.lastName} />
@@ -189,16 +223,20 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>E-mail</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="mail-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
+                ref={emailRef}
                 style={styles.input}
                 placeholder="seu@email.com"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={email}
                 onChangeText={v => { setEmail(v); clearError('email'); }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                submitBehavior="submit"
               />
             </View>
             <FieldError message={errors.email} />
@@ -208,17 +246,21 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Senha</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="lock-closed-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
+                ref={passwordRef}
                 style={styles.input}
                 placeholder="Mínimo 6 caracteres"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={password}
                 onChangeText={v => { setPassword(v); clearError('password'); }}
                 secureTextEntry={!showPassword}
+                returnKeyType="next"
+                onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                submitBehavior="submit"
               />
-              <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
-                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.muted} />
+              <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn} hitSlop={12}>
+                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={"#AAAAAA"} />
               </Pressable>
             </View>
             <FieldError message={errors.password} />
@@ -228,17 +270,21 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Confirmar senha</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="lock-closed-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
+                ref={confirmPasswordRef}
                 style={styles.input}
                 placeholder="Repita a senha"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={confirmPassword}
                 onChangeText={v => { setConfirmPassword(v); clearError('confirmPassword'); }}
                 secureTextEntry={!showConfirmPassword}
+                returnKeyType="next"
+                onSubmitEditing={() => phoneRef.current?.focus()}
+                submitBehavior="submit"
               />
-              <Pressable onPress={() => setShowConfirmPassword(v => !v)} style={styles.eyeBtn}>
-                <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={AgreGreen.muted} />
+              <Pressable onPress={() => setShowConfirmPassword(v => !v)} style={styles.eyeBtn} hitSlop={12}>
+                <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={"#AAAAAA"} />
               </Pressable>
             </View>
             <FieldError message={errors.confirmPassword} />
@@ -248,14 +294,18 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Telefone</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="call-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
+              <Ionicons name="call-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
+                ref={phoneRef}
                 style={styles.input}
                 placeholder="(99) 99999-9999"
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={phone}
                 onChangeText={v => { setPhone(v); clearError('phone'); }}
                 keyboardType="phone-pad"
+                returnKeyType="next"
+                onSubmitEditing={() => personDocRef.current?.focus()}
+                submitBehavior="submit"
               />
             </View>
             <FieldError message={errors.phone} />
@@ -284,14 +334,17 @@ export default function SignupScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>{docType === 'CPF' ? 'CPF' : 'CNPJ'} (somente números)</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="card-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
+              <Ionicons name="card-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
               <TextInput
+                ref={personDocRef}
                 style={styles.input}
                 placeholder={docType === 'CPF' ? '00000000000' : '00000000000000'}
-                placeholderTextColor={AgreGreen.placeholder}
+                placeholderTextColor={"#AAAAAA"}
                 value={personDoc}
                 onChangeText={v => { setPersonDoc(v); clearError('personDoc'); }}
                 keyboardType="numeric"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
               />
             </View>
             <FieldError message={errors.personDoc} />
@@ -316,11 +369,11 @@ export default function SignupScreen() {
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Placa do veículo</Text>
               <View style={styles.inputRow}>
-                <Ionicons name="car-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
+                <Ionicons name="car-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="ABC-1234"
-                  placeholderTextColor={AgreGreen.placeholder}
+                  placeholderTextColor={"#AAAAAA"}
                   value={carNumber}
                   onChangeText={v => { setCarNumber(v); clearError('carNumber'); }}
                   autoCapitalize="characters"
@@ -330,35 +383,56 @@ export default function SignupScreen() {
             </View>
           )}
 
-          {/* Localização */}
+          {/* ── Região ── */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Localização</Text>
-            <View style={styles.inputRow}>
-              <Ionicons name="location-outline" size={20} color={AgreGreen.brand} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Digite município ou UF"
-                placeholderTextColor={AgreGreen.placeholder}
-                value={selectedLocation ? `${selectedLocation.municipality} - ${selectedLocation.uf}` : locationQuery}
-                onChangeText={v => { setLocationQuery(v); setLocationId(''); clearError('locationId'); }}
-                onFocus={() => { if (selectedLocation) { setLocationQuery(''); setLocationId(''); } }}
-                autoCapitalize="words"
+            <Text style={styles.label}>Região</Text>
+            <Pressable
+              style={[styles.inputRow, errors.selectedUf ? { borderColor: '#E53E3E' } : null]}
+              onPress={() => setRegionOpen(v => !v)}
+            >
+              <Ionicons name="location-outline" size={20} color={"#AAAAAA"} style={styles.inputIcon} />
+              <Text style={[styles.input, !selectedRegion && { color: "#AAAAAA" }]}>
+                {selectedRegion ? `${selectedRegion.name} - ${selectedRegion.uf}` : 'Selecione uma região'}
+              </Text>
+              <Ionicons
+                name={regionOpen ? 'chevron-up' : 'chevron-down'}
+                size={18}
+                color={"#AAAAAA"}
               />
-            </View>
-            {filteredLocations.length > 0 && !locationId && (
-              <View style={{ marginTop: 4, gap: 2 }}>
-                {filteredLocations.map(loc => (
+            </Pressable>
+
+            {regionOpen && (
+              <View style={styles.locationDropdown}>
+                {REGIONS.map(region => (
                   <Pressable
-                    key={loc.id}
-                    style={{ paddingVertical: 10, paddingHorizontal: 12, backgroundColor: AgreGreen.inputBg, borderRadius: 8 }}
-                    onPress={() => { setLocationId(loc.id); setLocationQuery(''); clearError('locationId'); }}
+                    key={region.uf}
+                    style={[
+                      styles.locationOption,
+                      selectedUf === region.uf && styles.locationOptionActive,
+                    ]}
+                    onPress={() => handleSelectRegion(region.uf)}
                   >
-                    <Text style={{ color: AgreGreen.dark, fontSize: 14 }}>{loc.municipality} - {loc.uf}</Text>
+                    <Ionicons
+                      name="location-outline"
+                      size={15}
+                      color={selectedUf === region.uf ? AgreGreen.button : AgreGreen.muted}
+                    />
+                    <Text
+                      style={[
+                        styles.locationOptionText,
+                        selectedUf === region.uf && styles.locationOptionTextActive,
+                      ]}
+                    >
+                      {region.name} - {region.uf}
+                    </Text>
+                    {selectedUf === region.uf && (
+                      <Ionicons name="checkmark" size={16} color={AgreGreen.button} />
+                    )}
                   </Pressable>
                 ))}
               </View>
             )}
-            <FieldError message={errors.locationId} />
+            <FieldError message={errors.selectedUf} />
           </View>
 
           {/* Criar Conta */}
@@ -377,6 +451,8 @@ export default function SignupScreen() {
               <Text style={styles.bottomLink}>Entrar</Text>
             </Pressable>
           </View>
+          </View>
+        </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
