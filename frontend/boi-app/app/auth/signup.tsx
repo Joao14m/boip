@@ -30,6 +30,36 @@ const REGIONS = [
   { uf: 'MG', name: 'Minas Gerais' },
 ];
 
+const isValidCpf = (doc: string): boolean => {
+  if (!/^\d{11}$/.test(doc)) return false;
+  if (/^(\d)\1{10}$/.test(doc)) return false;
+  const d = doc.split('').map(Number);
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += d[i] * (10 - i);
+  let r = sum % 11;
+  if ((r < 2 ? 0 : 11 - r) !== d[9]) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += d[i] * (11 - i);
+  r = sum % 11;
+  return (r < 2 ? 0 : 11 - r) === d[10];
+};
+
+const isValidCnpj = (doc: string): boolean => {
+  if (!/^\d{14}$/.test(doc)) return false;
+  if (/^(\d)\1{13}$/.test(doc)) return false;
+  const d = doc.split('').map(Number);
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  let sum = 0;
+  for (let i = 0; i < 12; i++) sum += d[i] * w1[i];
+  let r = sum % 11;
+  if ((r < 2 ? 0 : 11 - r) !== d[12]) return false;
+  sum = 0;
+  for (let i = 0; i < 13; i++) sum += d[i] * w2[i];
+  r = sum % 11;
+  return (r < 2 ? 0 : 11 - r) === d[13];
+};
+
 export default function SignupScreen() {
   const { refreshMe } = useAuth();
 
@@ -85,12 +115,15 @@ export default function SignupScreen() {
 
     if (!phone.trim()) e.phone = 'Telefone é obrigatório.';
 
-    if (!personDoc.trim())
+    if (!personDoc.trim()) {
       e.personDoc = `${docType} é obrigatório.`;
-    else if (docType === 'CPF' && personDoc.replace(/\D/g, '').length !== 11)
-      e.personDoc = 'CPF deve ter 11 dígitos.';
-    else if (docType === 'CNPJ' && personDoc.replace(/\D/g, '').length !== 14)
-      e.personDoc = 'CNPJ deve ter 14 dígitos.';
+    } else {
+      const digits = personDoc.replace(/\D/g, '');
+      if (docType === 'CPF' && digits.length !== 11)        e.personDoc = 'CPF deve ter 11 dígitos.';
+      else if (docType === 'CNPJ' && digits.length !== 14)  e.personDoc = 'CNPJ deve ter 14 dígitos.';
+      else if (docType === 'CPF' && !isValidCpf(digits))    e.personDoc = 'CPF inválido.';
+      else if (docType === 'CNPJ' && !isValidCnpj(digits))  e.personDoc = 'CNPJ inválido.';
+    }
 
     if (hasCar && !carNumber.trim()) e.carNumber = 'Placa é obrigatória quando possui veículo.';
 
@@ -106,6 +139,13 @@ export default function SignupScreen() {
 
     try {
       setLoading(true);
+      const locations = await api.get<Array<{ id: string; uf: string }>>('/api/locations');
+      const match = locations.find(l => l.uf === selectedUf);
+      if (!match) {
+        setFormError('Região indisponível. Tente outra.');
+        setLoading(false);
+        return;
+      }
       await createUserWithEmailAndPassword(auth, email.trim(), password);
       await api.post('/auth/onboard', {
         firstName: firstName.trim(),
@@ -115,7 +155,7 @@ export default function SignupScreen() {
         docType,
         hasCar,
         carNumber: hasCar ? carNumber.trim() : null,
-        uf: selectedUf,
+        locationId: match.id,
       });
       await refreshMe();
       router.replace('/(tabs)/feed');
@@ -168,7 +208,7 @@ export default function SignupScreen() {
             <View style={styles.logoBox}>
               <Ionicons name="storefront" size={22} color="#fff" />
             </View>
-            <Text style={styles.logoText}>BoiMarket</Text>
+            <Text style={styles.logoText}>Agregis</Text>
           </View>
 
           <Text style={styles.welcome}>Criar conta</Text>

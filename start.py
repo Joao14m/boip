@@ -26,7 +26,9 @@ def cleanup(signum=None, frame=None):
         print(f"Deleting Asaas webhook {webhook_id}...")
         try:
             requests.delete(
-                f"http://localhost:{BACKEND_PORT}/api/webhooks/{webhook_id}", timeout=5
+                f"http://localhost:{BACKEND_PORT}/api/webhooks/{webhook_id}",
+                headers={"asaas-access-token": webhook_token},
+                timeout=5,
             )
         except Exception:
             pass
@@ -142,18 +144,20 @@ print("Backend is ready!")
 
 
 # ── 4. Delete old webhooks and register a new one ──
+admin_headers = {"asaas-access-token": webhook_token}
+
 print("Cleaning up old Asaas webhooks...")
 try:
     # makes the GET request and converts the raw json string into a python dict/list
     old_webhooks = requests.get(
-        f"http://localhost:{BACKEND_PORT}/api/webhooks", timeout=5
+        f"http://localhost:{BACKEND_PORT}/api/webhooks", headers=admin_headers, timeout=5
     ).json()
     for wh in old_webhooks.get("data", []):  # looping through and deleting each one
         wh_id = wh.get("id")
         if wh_id:  # if id is found, delete
             print(f"  Deleting old webhook: {wh_id}")
             requests.delete(
-                f"http://localhost:{BACKEND_PORT}/api/webhooks/{wh_id}", timeout=5
+                f"http://localhost:{BACKEND_PORT}/api/webhooks/{wh_id}", headers=admin_headers, timeout=5
             )
 except Exception as e:
     print(f"  Warning: could not clean old webhooks: {e}")
@@ -161,7 +165,7 @@ except Exception as e:
 print("Registering new Asaas webhook...")
 try:
     r = requests.post(
-        f"http://localhost:{BACKEND_PORT}/api/webhooks/register", timeout=10
+        f"http://localhost:{BACKEND_PORT}/api/webhooks/register", headers=admin_headers, timeout=10
     )
     data = r.json()
     webhook_id = data.get("id")

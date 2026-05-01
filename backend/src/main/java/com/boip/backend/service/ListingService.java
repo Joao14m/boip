@@ -255,13 +255,26 @@ public class ListingService {
     }
 
     private static boolean isValidMediaKey(String key, String expectedPrefix) {
-        if (key == null || !key.startsWith(expectedPrefix)) return false;
-        // Block traversal/empty segments inside the suffix.
-        String suffix = key.substring(expectedPrefix.length());
-        if (suffix.isBlank() || suffix.contains("..") || suffix.contains("//") || suffix.startsWith("/")) {
-            return false;
+        if (key == null) return false;
+        String path = extractStoragePath(key);
+        if (!path.startsWith(expectedPrefix)) return false;
+        String suffix = path.substring(expectedPrefix.length());
+        return !suffix.isBlank() && !suffix.contains("..") && !suffix.contains("//") && !suffix.startsWith("/");
+    }
+
+    // Accepts either a plain storage path ("listings/uid/lotId/0.jpg") or a
+    // Firebase Storage download URL. For download URLs the object path is the
+    // URL-decoded segment after "/o/", stripped of any query string.
+    private static String extractStoragePath(String key) {
+        if (!key.startsWith("https://firebasestorage.googleapis.com/")) return key;
+        String[] parts = key.split("/o/", 2);
+        if (parts.length < 2) return key;
+        String encoded = parts[1].split("\\?", 2)[0];
+        try {
+            return java.net.URLDecoder.decode(encoded, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return key;
         }
-        return true;
     }
 
     private LotSummaryDto buildLotSummary(UUID lotId) {
