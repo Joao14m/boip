@@ -37,23 +37,17 @@ public class CattleService {
     private final CattleLotRepository cattleRepository;
     private final CattleLotProfileRepository profileRepository;
 
-    public CattleLotResponseDto createLot(CattleLotCreateRequestDto req) {
+    public CattleLotResponseDto createLot(CattleLotCreateRequestDto req, AppUser caller) {
         String lotCode = req.getLotCode().trim();
-        Integer headCount = req.getHeadCount();
 
-        if (lotCode.length() > 60 || lotCode.isBlank())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Must be greater than 0 and less than or equal 60 digits");
-
-        if (headCount == null || headCount <= 0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Must be at greater than 0");
-
-        if (cattleRepository.existsByOwnerUserIdAndLotCode(req.getOwnerUserId(), lotCode))
+        // Remove this? 
+        if (cattleRepository.existsByOwnerUserIdAndLotCode(caller.getId(), lotCode))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Lot Code already exists");
 
         OffsetDateTime now = OffsetDateTime.now();
 
         CattleLot cattleEntity = CattleLot.builder()
-                .ownerUserId(req.getOwnerUserId())
+                .ownerUserId(caller.getId())
                 .lotCode(lotCode)
                 .headCount(req.getHeadCount())
                 .locationId(req.getLocationId())
@@ -157,14 +151,6 @@ public class CattleService {
         if (!caller.getId().equals(lot.getOwnerUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lot");
         }
-
-        if (req.getSex() != null && !VALID_SEX.contains(req.getSex().toUpperCase()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Invalid sex value. Allowed: " + VALID_SEX);
-
-        if (req.getPurpose() != null && !VALID_PURPOSE.contains(req.getPurpose().toUpperCase()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Invalid purpose value. Allowed: " + VALID_PURPOSE);
 
         int nextVersion = profileRepository.findMaxProfileVersionByLotId(lotId) + 1;
 

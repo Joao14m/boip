@@ -5,10 +5,11 @@ import {
   TextInput,
   Pressable,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -18,12 +19,13 @@ import { AgreGreen } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { uploadImage } from '@/lib/upload';
+import { FieldError } from '@/components/FieldError';
 
 const BREEDS = ['Nelore', 'Angus', 'Brahman', 'Hereford', 'Senepol', 'Gir', 'Guzerá', 'Tabapuã'];
 const PURPOSES = [
-  { label: 'Corte', value: 'BEEF' },
-  { label: 'Leite', value: 'DAIRY' },
-  { label: 'Reprodução', value: 'BREEDING' },
+  { label: 'Corte', value: 'Corte' },
+  { label: 'Leite', value: 'Leite' },
+  { label: 'Reprodução', value: 'Reprodução' },
 ];
 const SEXES = [
   { label: 'Macho', value: 'M' },
@@ -32,7 +34,7 @@ const SEXES = [
 ];
 
 export default function CreateListingScreen() {
-  const { userId } = useAuth();
+  const { userId, user } = useAuth();
   const [userLocationId, setUserLocationId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,6 +64,22 @@ export default function CreateListingScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [errors, setErrors]       = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState('');
+
+  const clearError = (field: string) =>
+    setErrors(prev => ({ ...prev, [field]: '' }));
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!lotCode.trim())                    e.lotCode    = 'Código do lote é obrigatório.';
+    if (!headCount || Number(headCount) < 1) e.headCount  = 'Quantidade deve ser pelo menos 1.';
+    if (!priceAmount || Number(priceAmount) <= 0) e.priceAmount = 'Informe um valor válido.';
+    if (images.length === 0)               e.images     = 'Adicione pelo menos uma foto.';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const pickImage = async () => {
     if (images.length >= 3) {
       Alert.alert('Limite', 'Máximo de 3 imagens.');
@@ -81,14 +99,8 @@ export default function CreateListingScreen() {
   };
 
   const buildAndSubmit = async (publish: boolean) => {
-    if (!lotCode || !headCount || !priceAmount) {
-      Alert.alert('Erro', 'Preencha código do lote, quantidade e preço.');
-      return;
-    }
-    if (images.length === 0) {
-      Alert.alert('Erro', 'Adicione pelo menos uma foto.');
-      return;
-    }
+    setFormError('');
+    if (!validate()) return;
 
     try {
       setLoading(true);
@@ -114,7 +126,7 @@ export default function CreateListingScreen() {
       // 3. Upload images to Firebase Storage
       const media = [];
       for (let i = 0; i < images.length; i++) {
-        const path = `listings/${userId}/${lot.id}/${i}.jpg`;
+        const path = `listings/${user!.uid}/${lot.id}/${i}.jpg`;
         const url = await uploadImage(images[i], path);
         media.push({ mediaSlot: i, mediaType: 'IMAGE', mediaKey: url, contentType: 'image/jpeg' });
       }
@@ -122,7 +134,6 @@ export default function CreateListingScreen() {
       // 4. Create listing
       const listing = await api.post<any>('/api/listings', {
         lotId: lot.id,
-        sellerUserId: userId,
         priceType,
         priceAmount: Number(priceAmount),
         currency: 'BRL',
@@ -136,7 +147,7 @@ export default function CreateListingScreen() {
 
       router.back();
     } catch (e: any) {
-      Alert.alert('Erro ao criar anuncio', e.message);
+      setFormError(e.message ?? 'Não foi possível criar o anúncio. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -183,21 +194,31 @@ export default function CreateListingScreen() {
         <ScrollView
           contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
+          <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
           {/* ── Lote ── */}
           <Text style={{ fontSize: 18, fontWeight: '700', color: AgreGreen.dark, marginBottom: 16 }}>
             Dados do Lote
           </Text>
 
+          {formError ? (
+            <View style={{ backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+              <Text style={{ color: '#C53030', fontSize: 13 }}>{formError}</Text>
+            </View>
+          ) : null}
+
           <View style={{ marginBottom: 16 }}>
             <Text style={labelStyle}>Código do Lote</Text>
-            <TextInput style={inputStyle} placeholder="Ex: LOTE-001" placeholderTextColor={AgreGreen.placeholder} value={lotCode} onChangeText={setLotCode} />
+            <TextInput style={inputStyle} placeholder="Ex: LOTE-001" placeholderTextColor={AgreGreen.placeholder} value={lotCode} onChangeText={v => { setLotCode(v); clearError('lotCode'); }} />
+            <FieldError message={errors.lotCode} />
           </View>
 
           <View style={{ marginBottom: 16 }}>
             <Text style={labelStyle}>Quantidade (cabeças)</Text>
-            <TextInput style={inputStyle} placeholder="Ex: 50" placeholderTextColor={AgreGreen.placeholder} value={headCount} onChangeText={setHeadCount} keyboardType="numeric" />
+            <TextInput style={inputStyle} placeholder="Ex: 50" placeholderTextColor={AgreGreen.placeholder} value={headCount} onChangeText={v => { setHeadCount(v); clearError('headCount'); }} keyboardType="numeric" />
+            <FieldError message={errors.headCount} />
           </View>
 
           {/* ── Perfil ── */}
@@ -282,14 +303,15 @@ export default function CreateListingScreen() {
             ))}
             {images.length < 3 && (
               <Pressable
-                onPress={pickImage}
-                style={{ width: 100, height: 100, borderRadius: 10, borderWidth: 2, borderColor: AgreGreen.inputBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: AgreGreen.inputBg }}
+                onPress={() => { pickImage(); clearError('images'); }}
+                style={{ width: 100, height: 100, borderRadius: 10, borderWidth: 2, borderColor: errors.images ? '#E53E3E' : AgreGreen.inputBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: AgreGreen.inputBg }}
               >
-                <Ionicons name="camera-outline" size={28} color={AgreGreen.muted} />
-                <Text style={{ color: AgreGreen.muted, fontSize: 11, marginTop: 4 }}>{images.length}/3</Text>
+                <Ionicons name="camera-outline" size={28} color={errors.images ? '#E53E3E' : AgreGreen.muted} />
+                <Text style={{ color: errors.images ? '#E53E3E' : AgreGreen.muted, fontSize: 11, marginTop: 4 }}>{images.length}/3</Text>
               </Pressable>
             )}
           </View>
+          <FieldError message={errors.images} />
 
           {/* ── Preço ── */}
           <Text style={{ fontSize: 18, fontWeight: '700', color: AgreGreen.dark, marginTop: 8, marginBottom: 16 }}>
@@ -310,7 +332,8 @@ export default function CreateListingScreen() {
 
           <View style={{ marginBottom: 24 }}>
             <Text style={labelStyle}>Valor (R$)</Text>
-            <TextInput style={inputStyle} placeholder="Ex: 150000" placeholderTextColor={AgreGreen.placeholder} value={priceAmount} onChangeText={setPriceAmount} keyboardType="numeric" />
+            <TextInput style={inputStyle} placeholder="Ex: 150000" placeholderTextColor={AgreGreen.placeholder} value={priceAmount} onChangeText={v => { setPriceAmount(v); clearError('priceAmount'); }} keyboardType="numeric" />
+            <FieldError message={errors.priceAmount} />
           </View>
 
           {/* ── Submit ── */}
@@ -348,6 +371,7 @@ export default function CreateListingScreen() {
               </Text>
             </Pressable>
           </View>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

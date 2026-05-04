@@ -9,6 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -158,8 +161,8 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-          <View style={{ alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, backgroundColor: sc.bg }}>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: sc.text }}>{statusLabel[item.status] ?? item.status}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
+            <Text style={[styles.statusText, { color: sc.text }]}>{statusLabel[item.status] ?? item.status}</Text>
           </View>
         </View>
       </View>
@@ -171,8 +174,9 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* ── Header ── */}
       <View style={styles.header}>
+        <View style={styles.avatarGlow} />
         <View style={styles.avatar}>
-          <Ionicons name="person-outline" size={32} color="#fff" />
+          <Ionicons name="person" size={30} color="#fff" />
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>
@@ -251,11 +255,15 @@ export default function ProfileScreen() {
         </View>
       ) : (
         /* ── Conta Tab ── */
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           style={styles.contaContainer}
           contentContainerStyle={styles.contaScroll}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
+          <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
           {loadingUser ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={AgreGreen.brand} />
@@ -271,7 +279,7 @@ export default function ProfileScreen() {
                       Gerencie suas informacoes pessoais
                     </Text>
                   </View>
-                  {!editing ? (
+                  {!editing && (
                     <Pressable style={styles.editBtn} onPress={() => {
                       setEditForm({
                         firstName: user.firstName ?? '',
@@ -285,28 +293,30 @@ export default function ProfileScreen() {
                       <Ionicons name="create-outline" size={14} color="#fff" />
                       <Text style={styles.editBtnText}>Editar</Text>
                     </Pressable>
-                  ) : (
-                    <View style={{ flexDirection: 'row', gap: 8 }}>
-                      <Pressable style={[styles.editBtn, { backgroundColor: '#ccc' }]} onPress={() => setEditing(false)}>
-                        <Text style={styles.editBtnText}>Cancelar</Text>
-                      </Pressable>
-                      <Pressable style={styles.editBtn} onPress={async () => {
-                        try {
-                          const updated = await api.patch<any>(`/api/users/${userId}`, editForm);
-                          setUser(updated);
-                          setEditing(false);
-                        } catch (e: any) {
-                          Alert.alert('Erro', e.message);
-                        }
-                      }}>
-                        <Text style={styles.editBtnText}>Salvar</Text>
-                      </Pressable>
-                    </View>
                   )}
                 </View>
 
                 {editing ? (
                   <>
+                    <View style={styles.infoRow}>
+                      <View style={[styles.infoField, { flex: 1 }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={styles.infoLabel}>Email</Text>
+                          <Ionicons name="lock-closed" size={12} color={AgreGreen.muted} />
+                        </View>
+                        <Text
+                          style={[
+                            styles.infoValue,
+                            { color: AgreGreen.muted, paddingVertical: 4 },
+                          ]}
+                        >
+                          {user.email}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: AgreGreen.muted, marginTop: 2 }}>
+                          Email não pode ser alterado aqui.
+                        </Text>
+                      </View>
+                    </View>
                     <View style={styles.infoRow}>
                       <View style={[styles.infoField, styles.infoHalf]}>
                         <Text style={styles.infoLabel}>Nome</Text>
@@ -344,6 +354,28 @@ export default function ProfileScreen() {
                           keyboardType="numeric"
                         />
                       </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+                      <Pressable
+                        style={[styles.editBtn, { flex: 1, backgroundColor: '#ccc', justifyContent: 'center' }]}
+                        onPress={() => setEditing(false)}
+                      >
+                        <Text style={styles.editBtnText}>Cancelar</Text>
+                      </Pressable>
+                      <Pressable
+                        style={[styles.editBtn, { flex: 1, justifyContent: 'center' }]}
+                        onPress={async () => {
+                          try {
+                            const updated = await api.patch<any>(`/api/users/${userId}`, editForm);
+                            setUser(updated);
+                            setEditing(false);
+                          } catch (e: any) {
+                            Alert.alert('Erro', e.message);
+                          }
+                        }}
+                      >
+                        <Text style={styles.editBtnText}>Salvar</Text>
+                      </Pressable>
                     </View>
                   </>
                 ) : (
@@ -403,6 +435,26 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
+              {/* Dados Bancarios */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <View>
+                    <Text style={styles.sectionTitle}>Dados para Recebimento</Text>
+                    <Text style={styles.sectionSubtitle}>PIX ou TED para receber pagamentos</Text>
+                  </View>
+                </View>
+                <Pressable
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}
+                  onPress={() => router.push('/payout-info')}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Ionicons name="card-outline" size={18} color={AgreGreen.brand} />
+                    <Text style={{ fontSize: 14, color: '#1B2D24' }}>Gerenciar dados bancários</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#CCC" />
+                </Pressable>
+              </View>
+
               {/* Actions */}
               <View style={styles.sectionCard}>
                 <Pressable style={styles.dangerBtn} onPress={() => {
@@ -445,7 +497,9 @@ export default function ProfileScreen() {
               </View>
             </>
           ) : null}
+          </Pressable>
         </ScrollView>
+        </KeyboardAvoidingView>
       )}
     </SafeAreaView>
   );

@@ -1,3 +1,7 @@
+# Claude Code
+.claude/
+docs/
+
 # OS / IDE
 .DS_Store
 Thumbs.db
@@ -41,3 +45,6 @@ frontend/boi-app/android/
 
 .github/appmod/
 .github/appmod/appcat/
+
+# Documentation
+docs.txt

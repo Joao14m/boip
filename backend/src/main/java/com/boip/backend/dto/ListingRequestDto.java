@@ -20,15 +20,13 @@ public class ListingRequestDto {
     @NotNull
     UUID lotId;
 
-    @NotNull
-    UUID sellerUserId;
-
     @NotBlank @Pattern(regexp = "PER_HEAD|TOTAL")
     String priceType;
 
     @NotNull @DecimalMin("0.01")
     BigDecimal priceAmount;
 
+    @Pattern(regexp = "^[A-Z]{3}$", message = "currency must be a 3-letter ISO code")
     String currency;
 
     OffsetDateTime expiresAt;

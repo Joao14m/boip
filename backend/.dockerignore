@@ -1,0 +1,14 @@
+# compiled output — Maven rebuilds this inside the container
+target/
+
+# documentation
+*.md
+
+# Maven wrapper scripts — not needed, base image has Maven
+mvnw
+mvnw.cmd
+
+# IDE and OS files
+.idea/
+*.iml
+.DS_Store

@@ -42,6 +42,9 @@ public class AppUser {
     @Column(name = "doc_type", nullable = false, length = 4)
     private String docType; // CPF | CNPJ
 
+    @Column(name = "asaas_customer_id", length = 50)
+    private String asaasCustomerId;
+
     @Column(name = "has_car", nullable = false)
     private Boolean hasCar;
 

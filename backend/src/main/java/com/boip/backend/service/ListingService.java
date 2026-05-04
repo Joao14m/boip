@@ -13,9 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 import com.boip.backend.dto.ListingMediaInputDto;
 import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
+import com.boip.backend.dto.ListingPatchRequestDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.LotSummaryDto;
@@ -30,6 +33,7 @@ import com.boip.backend.repository.CattleLotProfileRepository;
 import com.boip.backend.repository.CattleLotRepository;
 import com.boip.backend.repository.ListingMediaRepository;
 import com.boip.backend.repository.ListingRepository;
+import com.boip.backend.repository.LocationRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,11 +48,21 @@ public class ListingService {
     private final ListingMediaRepository listingMediaRepository;
     private final CattleLotRepository cattleLotRepository;
     private final CattleLotProfileRepository cattleLotProfileRepository;
+    private final LocationRepository locationRepository;
+    private final AuditService auditService;
 
     @Transactional
-    public ListingResponseDto create(ListingRequestDto req) {
+    public ListingResponseDto create(ListingRequestDto req, AppUser caller) {
+        // Ownership guard: caller must own the lot they're listing.
+        CattleLot lot = cattleLotRepository.findById(req.getLotId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lot not found: " + req.getLotId()));
+        if (!caller.getId().equals(lot.getOwnerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lot");
+        }
+
         List<ListingMediaInputDto> mediaItems = req.getMedia();
 
+        String expectedPrefix = "listings/" + caller.getFirebaseUid() + "/" + lot.getId() + "/";
         Set<Integer> seenSlots = new HashSet<>();
         for (ListingMediaInputDto m : mediaItems) {
             if (!seenSlots.add(m.getMediaSlot())) {
@@ -61,6 +75,13 @@ public class ListingService {
             if (m.getMediaSlot() < 3 && !"IMAGE".equals(m.getMediaType())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slots 0-2 must be IMAGE");
             }
+            // Pin mediaKey to the caller's own Storage path. Without this, a client could submit
+            // listings/{otherUserId}/.../x.jpg and have the listing render someone else's media,
+            // or smuggle path traversal segments past the public-read Firebase Storage rule.
+            if (!isValidMediaKey(m.getMediaKey(), expectedPrefix)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "mediaKey must be under " + expectedPrefix);
+            }
         }
 
         String currency = (req.getCurrency() == null || req.getCurrency().isBlank())
@@ -71,7 +92,7 @@ public class ListingService {
 
         Listing entity = Listing.builder()
                 .lotId(req.getLotId())
-                .sellerUserId(req.getSellerUserId())
+                .sellerUserId(caller.getId()) // I have change this
                 .status("DRAFT")
                 .priceType(req.getPriceType())
                 .priceAmount(req.getPriceAmount())
@@ -122,6 +143,24 @@ public class ListingService {
         return PageResponseDto.of(listingRepository.findAllByStatus(status, pageable).map(this::toDto));
     }
 
+    @Transactional
+    public ListingResponseDto patch(UUID id, ListingPatchRequestDto req, AppUser caller) {
+        Listing entity = listingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id));
+        if (!caller.getId().equals(entity.getSellerUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
+        }
+        if (!Set.of("DRAFT", "PAUSED").contains(entity.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Price can only be updated on DRAFT or PAUSED listings");
+        }
+        if (req.getPriceType() != null) entity.setPriceType(req.getPriceType());
+        if (req.getPriceAmount() != null) entity.setPriceAmount(req.getPriceAmount());
+        if (req.getCurrency() != null) entity.setCurrency(req.getCurrency().trim());
+        if (req.getExpiresAt() != null) entity.setExpiresAt(req.getExpiresAt());
+        return toDto(listingRepository.save(entity));
+    }
+
     public ListingResponseDto updateStatus(UUID id, String newStatus, AppUser caller) {
         if (newStatus == null || !VALID_STATUSES.contains(newStatus)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -132,11 +171,15 @@ public class ListingService {
         if (!caller.getId().equals(entity.getSellerUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
         }
+        String previousStatus = entity.getStatus();
         entity.setStatus(newStatus);
         if ("ACTIVE".equals(newStatus) && entity.getPublishedAt() == null) {
             entity.setPublishedAt(OffsetDateTime.now());
         }
-        return toDto(listingRepository.save(entity));
+        ListingResponseDto result = toDto(listingRepository.save(entity));
+        auditService.record(caller.getId(), "LISTING_STATUS_CHANGED", id,
+                Map.of("from", previousStatus, "to", newStatus));
+        return result;
     }
 
     public void delete(UUID id, AppUser caller) {
@@ -166,6 +209,11 @@ public class ListingService {
         }
         if (req.getMediaSlot() < 3 && !"IMAGE".equals(req.getMediaType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slots 0-2 must be IMAGE");
+        }
+        String expectedPrefix = "listings/" + caller.getFirebaseUid() + "/" + listing.getLotId() + "/";
+        if (!isValidMediaKey(req.getMediaKey(), expectedPrefix)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "mediaKey must be under " + expectedPrefix);
         }
 
         ListingMedia entity = ListingMedia.builder()
@@ -206,12 +254,41 @@ public class ListingService {
         return ListingMapper.toDto(entity, media, lotSummary);
     }
 
+    private static boolean isValidMediaKey(String key, String expectedPrefix) {
+        if (key == null) return false;
+        String path = extractStoragePath(key);
+        if (!path.startsWith(expectedPrefix)) return false;
+        String suffix = path.substring(expectedPrefix.length());
+        return !suffix.isBlank() && !suffix.contains("..") && !suffix.contains("//") && !suffix.startsWith("/");
+    }
+
+    // Accepts either a plain storage path ("listings/uid/lotId/0.jpg") or a
+    // Firebase Storage download URL. For download URLs the object path is the
+    // URL-decoded segment after "/o/", stripped of any query string.
+    private static String extractStoragePath(String key) {
+        if (!key.startsWith("https://firebasestorage.googleapis.com/")) return key;
+        String[] parts = key.split("/o/", 2);
+        if (parts.length < 2) return key;
+        String encoded = parts[1].split("\\?", 2)[0];
+        try {
+            return java.net.URLDecoder.decode(encoded, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return key;
+        }
+    }
+
     private LotSummaryDto buildLotSummary(UUID lotId) {
+        // Presentational only — lot summaries are shown on the public marketplace feed,
+        // so no caller-ownership filter here. Ownership is enforced at write time (see create()).
         CattleLot lot = cattleLotRepository.findById(lotId).orElse(null);
         if (lot == null) return null;
 
         CattleLotProfile profile = cattleLotProfileRepository
                 .findTopByLotIdOrderByProfileVersionDesc(lotId)
+                .orElse(null);
+
+        String uf = locationRepository.findById(lot.getLocationId())
+                .map(l -> l.getUf())
                 .orElse(null);
 
         return LotSummaryDto.builder()
@@ -223,6 +300,7 @@ public class ListingService {
                 .purpose(profile != null ? profile.getPurpose() : null)
                 .avgWeightKg(profile != null ? profile.getAvgWeightKg() : null)
                 .avgAgeMonths(profile != null ? profile.getAvgAgeMonths() : null)
+                .uf(uf)
                 .build();
     }
 }

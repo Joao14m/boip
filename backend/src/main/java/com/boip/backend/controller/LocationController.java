@@ -18,7 +18,9 @@ import com.boip.backend.service.LocationService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/api/locations")
 @RequiredArgsConstructor
@@ -33,11 +35,5 @@ public class LocationController {
     @GetMapping("/{id}")
     public LocationResponseDto findById(@PathVariable UUID id) {
         return locationService.findById(id);
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public LocationResponseDto create(@Valid @RequestBody LocationRequestDto req) {
-        return locationService.create(req);
     }
 }

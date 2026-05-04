@@ -7,6 +7,7 @@ import com.boip.backend.repository.AppUserRepository;
 import com.boip.backend.repository.LocationRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -34,6 +35,9 @@ public class AuthService {
         if (me.email() == null || me.email().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "missing_email");
         }
+
+        if (!me.emailVerified())
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "email_not_verified");
 
         // Regra/consistência: locationId precisa existir
         // (req.locationId já foi validado como NOT NULL no DTO)

@@ -1,25 +1,29 @@
 package com.boip.backend.controller;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.boip.backend.dto.ListingMediaRequestDto;
 import com.boip.backend.dto.ListingMediaResponseDto;
+import com.boip.backend.dto.ListingPatchRequestDto;
 import com.boip.backend.dto.ListingRequestDto;
 import com.boip.backend.dto.ListingResponseDto;
 import com.boip.backend.dto.PageResponseDto;
-import com.boip.backend.entity.AppUser;
+import com.boip.backend.dto.StatusUpdateRequestDto;
 import com.boip.backend.service.ListingService;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import static com.boip.backend.auth.SecurityUtils.requireAppUser;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+
+@Validated
 @RestController
 @RequestMapping("/api/listings")
 @RequiredArgsConstructor
@@ -30,7 +34,7 @@ public class ListingController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ListingResponseDto create(@Valid @RequestBody ListingRequestDto req) {
-        return listingService.create(req);
+        return listingService.create(req, requireAppUser());
     }
 
     @GetMapping("/{id}")
@@ -44,19 +48,26 @@ public class ListingController {
             @RequestParam(required = false) UUID sellerUserId,
             @RequestParam(required = false) UUID lotId,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
         if (sellerUserId != null) return listingService.findBySeller(sellerUserId, page, size);
         if (lotId != null) return listingService.findByLot(lotId, page, size);
         String effectiveStatus = (status != null && !status.isBlank()) ? status.toUpperCase() : "ACTIVE";
         return listingService.findByStatus(effectiveStatus, page, size);
     }
 
+    @PatchMapping("/{id}")
+    public ListingResponseDto patch(
+            @PathVariable UUID id,
+            @Valid @RequestBody ListingPatchRequestDto req) {
+        return listingService.patch(id, req, requireAppUser());
+    }
+
     @PatchMapping("/{id}/status")
     public ListingResponseDto updateStatus(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body) {
-        return listingService.updateStatus(id, body.get("status"), requireAppUser());
+            @Valid @RequestBody StatusUpdateRequestDto body) {
+        return listingService.updateStatus(id, body.getStatus(), requireAppUser());
     }
 
     @DeleteMapping("/{id}")
@@ -69,7 +80,7 @@ public class ListingController {
     @ResponseStatus(HttpStatus.CREATED)
     public ListingMediaResponseDto addMedia(
             @PathVariable UUID id,
-            @RequestBody ListingMediaRequestDto req) {
+            @Valid @RequestBody ListingMediaRequestDto req) {
         req.setListingId(id);
         return listingService.addMedia(req, requireAppUser());
     }
@@ -85,9 +96,4 @@ public class ListingController {
         listingService.removeMedia(mediaId, requireAppUser());
     }
 
-    private AppUser requireAppUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof AppUser u) return u;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
-    }
 }

@@ -1,129 +1,128 @@
-import { Dimensions, StyleSheet } from 'react-native';
-import { AgreGreen } from '@/constants/theme';
-
-export const HEADER_HEIGHT = Dimensions.get('window').height * 0.36;
+import { StyleSheet } from 'react-native';
+import { AgreGreen, Fonts } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
+  // ── Fundo ──────────────────────────────────────
   container: {
     flex: 1,
-    backgroundColor: AgreGreen.header,
+    backgroundColor: '#FFFFFF',
   },
   flex: { flex: 1 },
 
-  // Header
-  header: {
-    height: HEADER_HEIGHT,
-    backgroundColor: AgreGreen.header,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  circle1: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: AgreGreen.brand,
-    opacity: 0.3,
-    top: -60,
-    right: -50,
-  },
-  circle2: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: AgreGreen.dark,
-    opacity: 0.15,
-    top: 30,
-    right: 70,
-  },
-  circle3: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: AgreGreen.brand,
-    opacity: 0.18,
-    bottom: 50,
-    right: 16,
-  },
-  headerBrand: {
-    position: 'absolute',
-    top: 20,
-    left: 28,
-    fontSize: 26,
-    fontWeight: '800',
-    color: AgreGreen.dark,
-    letterSpacing: 1,
-  },
-  cattleEmoji: {
-    fontSize: 68,
-    transform: [{ scaleX: -1 }],
-    position: 'absolute',
-    bottom: 20,
-    left: 24,
-    opacity: 0.85,
+  // ── ScrollView ─────────────────────────────────
+  scroll: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 36,
   },
 
-  // Card
+  // ── Card ───────────────────────────────────────
   card: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    marginTop: -28,
-  },
-  cardContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     paddingHorizontal: 28,
-    paddingTop: 32,
-    paddingBottom: 48,
+    paddingVertical: 32,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
   },
-  welcome: {
-    fontSize: 26,
-    fontWeight: '800',
+
+  // ── Logo ───────────────────────────────────────
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 24,
+  },
+  logoBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: AgreGreen.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: AgreGreen.brand,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoText: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 20,
     color: AgreGreen.dark,
-    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+
+  // ── Títulos ────────────────────────────────────
+  welcome: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 26,
+    color: '#0F1C15',
+    marginBottom: 6,
   },
   subtitle: {
+    fontFamily: Fonts.regular,
     fontSize: 14,
     color: AgreGreen.muted,
-    marginBottom: 30,
+    lineHeight: 20,
+    marginBottom: 24,
   },
 
-  // Inputs
-  fieldGroup: { marginBottom: 18 },
-  label: {
+  // ── Banner de erro ─────────────────────────────
+  errorBanner: {
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FED7D7',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+  errorBannerText: {
+    fontFamily: Fonts.regular,
+    color: '#C53030',
     fontSize: 13,
-    fontWeight: '600',
+  },
+
+  // ── Inputs ─────────────────────────────────────
+  fieldGroup: { marginBottom: 14 },
+  label: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 13,
     color: '#1B2D24',
-    marginBottom: 8,
-    letterSpacing: 0.2,
+    marginBottom: 6,
+    letterSpacing: 0.1,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AgreGreen.inputBg,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: AgreGreen.inputBorder,
-    borderRadius: 14,
+    borderColor: '#E2E2E2',
+    borderRadius: 12,
     paddingHorizontal: 14,
-    height: 54,
+    height: 52,
   },
   inputIcon: { marginRight: 10 },
   input: {
     flex: 1,
+    fontFamily: Fonts.regular,
     fontSize: 15,
     color: '#1B2D24',
   },
   eyeBtn: { padding: 4 },
 
-  // Remember me / Forgot
+  // ── Lembrar-me / Esqueceu ──────────────────────
   rowBetween: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 4,
-    marginBottom: 28,
+    marginBottom: 22,
   },
   checkRow: {
     flexDirection: 'row',
@@ -131,11 +130,11 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: AgreGreen.brand,
+    borderColor: '#CCCCCC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -144,53 +143,55 @@ export const styles = StyleSheet.create({
     borderColor: AgreGreen.button,
   },
   checkLabel: {
-    fontSize: 14,
-    color: AgreGreen.muted,
+    fontFamily: Fonts.regular,
+    fontSize: 13,
+    color: '#555555',
   },
   forgotText: {
-    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    fontSize: 13,
     color: AgreGreen.button,
-    fontWeight: '600',
   },
 
-  // Button
+  // ── Botão Entrar ───────────────────────────────
   button: {
-    backgroundColor: AgreGreen.button,
-    borderRadius: 16,
-    height: 56,
+    backgroundColor: '#111111',
+    borderRadius: 14,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: AgreGreen.dark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   buttonPressed: {
-    opacity: 0.88,
+    opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   buttonText: {
+    fontFamily: Fonts.bold,
     color: '#fff',
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
     letterSpacing: 0.5,
   },
 
-  // Bottom link
+  // ── Link cadastro ──────────────────────────────
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 20,
   },
   bottomText: {
+    fontFamily: Fonts.regular,
     fontSize: 14,
-    color: AgreGreen.muted,
+    color: '#888888',
   },
   bottomLink: {
+    fontFamily: Fonts.bold,
     fontSize: 14,
     color: AgreGreen.button,
-    fontWeight: '700',
   },
 });
