@@ -8,24 +8,35 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.core.io.Resource;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp(
-            @Value("${boip.firebase.service-account:${FIREBASE_SERVICE_ACCOUNT:}}") Resource serviceAccount
+            @Value("${boip.firebase.service-account:${FIREBASE_SERVICE_ACCOUNT:}}") Resource serviceAccount,
+            @Value("${FIREBASE_SERVICE_ACCOUNT_JSON:}") String serviceAccountJson
     ) throws IOException {
-
-        if (serviceAccount == null || !serviceAccount.exists()) {
-            throw new IllegalStateException("Firebase service account not found. Set boip.firebase.service-account or FIREBASE_SERVICE_ACCOUNT");
-        }
 
         if (!FirebaseApp.getApps().isEmpty()) return FirebaseApp.getInstance();
 
+        InputStream credentialsStream;
+        if (serviceAccountJson != null && !serviceAccountJson.isBlank()) {
+            credentialsStream = new ByteArrayInputStream(serviceAccountJson.getBytes(StandardCharsets.UTF_8));
+        } else if (serviceAccount != null && serviceAccount.exists()) {
+            credentialsStream = serviceAccount.getInputStream();
+        } else {
+            throw new IllegalStateException(
+                    "Firebase credentials not found. Set FIREBASE_SERVICE_ACCOUNT_JSON (raw JSON) or FIREBASE_SERVICE_ACCOUNT (file path)."
+            );
+        }
+
         FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount.getInputStream()))
+                .setCredentials(GoogleCredentials.fromStream(credentialsStream))
                 .build();
 
         return FirebaseApp.initializeApp(options);
