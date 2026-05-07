@@ -11,8 +11,7 @@ export default function FeedPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) router.replace("/");
-    else if (!onboarded) router.replace("/signup");
+    if (!user || !onboarded) router.replace("/");
   }, [user, loading, onboarded, router]);
 
   if (loading || !user || !onboarded) {

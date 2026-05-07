@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setPersistence(auth, browserLocalPersistence).catch(() => {});
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       setUser(firebaseUser);
       if (firebaseUser) {
         await fetchMe();
