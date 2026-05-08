@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
   Check,
   CheckCircle2,
   Clipboard,
@@ -13,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { PageHeader } from "@/components/PageHeader";
 
 type PaymentBilling = {
   pix?: {
@@ -94,6 +94,10 @@ export default function PaymentPage() {
     };
   }, []);
 
+  const pixKey = chargeId && billingState.chargeId === chargeId ? billingState.pixKey : "";
+  const billingError = chargeId && billingState.chargeId === chargeId ? billingState.error : "";
+  const loadingPix = Boolean(chargeId && billingState.chargeId !== chargeId);
+
   const handleCopy = async () => {
     if (!pixKey) return;
     try {
@@ -106,10 +110,6 @@ export default function PaymentPage() {
       setCopyError("Não foi possível copiar automaticamente. Selecione a chave PIX manualmente.");
     }
   };
-
-  const pixKey = chargeId && billingState.chargeId === chargeId ? billingState.pixKey : "";
-  const billingError = chargeId && billingState.chargeId === chargeId ? billingState.error : "";
-  const loadingPix = Boolean(chargeId && billingState.chargeId !== chargeId);
 
   if (confirmed) {
     return (
@@ -134,18 +134,7 @@ export default function PaymentPage() {
 
   return (
     <main className="min-h-screen bg-[#F5F5F5]">
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-agre-dark hover:bg-agre-pale"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="font-display text-base font-extrabold text-agre-dark">Pagamento via PIX</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <PageHeader title="Pagamento via PIX" onBack={() => router.back()} />
 
       <div className="mx-auto max-w-2xl px-4 py-5">
         <section className="mb-4 flex items-start gap-3 rounded-2xl bg-agre-pale p-4">

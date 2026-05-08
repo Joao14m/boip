@@ -218,7 +218,7 @@ export default function SignupPage() {
                   <Store className="h-7 w-7 text-white drop-shadow-sm" strokeWidth={2.25} />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900">BoiMarket</h2>
+                  <h2 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900">AgerisMarket</h2>
                   <p className="text-sm font-medium text-agre-muted">Marketplace de Gado</p>
                 </div>
               </div>
@@ -232,7 +232,7 @@ export default function SignupPage() {
                 Junte-se a milhares de pecuaristas que{" "}
                 <span className="relative inline-block">
                   <span className="bg-gradient-to-r from-agre-button via-agre-brand to-agre-dark bg-clip-text text-transparent">
-                    confiam no BoiMarket
+                    confiam no AgerisMarket
                   </span>
                   <span aria-hidden className="absolute inset-x-0 -bottom-1 h-1 rounded-full bg-gradient-to-r from-transparent via-agre-brand/60 to-transparent blur-sm" />
                 </span>
@@ -344,25 +344,23 @@ export default function SignupPage() {
 
                   {/* Senha + Confirmar Senha */}
                   <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
+                    <div className="min-w-0">
                       <label htmlFor="password" className="block text-sm font-semibold tracking-tight text-zinc-800">Senha</label>
-                      <div className="mt-2 flex gap-2">
-                        <div className={`${fieldBoxBase(!!errors.password)} flex-1`}>
-                          <Lock className={`h-[18px] w-[18px] transition-colors ${errors.password ? "text-red-400" : "text-zinc-400"}`} strokeWidth={2} />
-                          <input
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            autoComplete="new-password"
-                            placeholder="Mínimo 6 caracteres"
-                            value={password}
-                            onChange={(ev) => { setPassword(ev.target.value); clearError("password"); }}
-                            className="min-w-0 flex-1 bg-transparent text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
-                          />
-                        </div>
+                      <div className={fieldBox(!!errors.password)}>
+                        <Lock className={`h-[18px] w-[18px] flex-shrink-0 transition-colors ${errors.password ? "text-red-400" : "text-zinc-400"}`} strokeWidth={2} />
+                        <input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          placeholder="Mínimo 6 caracteres"
+                          value={password}
+                          onChange={(ev) => { setPassword(ev.target.value); clearError("password"); }}
+                          className="min-w-0 flex-1 bg-transparent text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
+                        />
                         <button
                           type="button"
                           onClick={() => setShowPassword((v) => !v)}
-                          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white/90 text-zinc-400 transition-colors hover:border-agre-brand/40 hover:bg-white hover:text-zinc-700"
+                          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
                           aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                         >
                           {showPassword ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}
@@ -371,25 +369,23 @@ export default function SignupPage() {
                       {errors.password && <p className="mt-1.5 text-xs font-medium text-red-600">{errors.password}</p>}
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <label htmlFor="confirmPassword" className="block text-sm font-semibold tracking-tight text-zinc-800">Confirmar senha</label>
-                      <div className="mt-2 flex gap-2">
-                        <div className={`${fieldBoxBase(!!errors.confirmPassword)} flex-1`}>
-                          <Lock className={`h-[18px] w-[18px] transition-colors ${errors.confirmPassword ? "text-red-400" : "text-zinc-400"}`} strokeWidth={2} />
-                          <input
-                            id="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
-                            autoComplete="new-password"
-                            placeholder="Repita a senha"
-                            value={confirmPassword}
-                            onChange={(ev) => { setConfirmPassword(ev.target.value); clearError("confirmPassword"); }}
-                            className="min-w-0 flex-1 bg-transparent text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
-                          />
-                        </div>
+                      <div className={fieldBox(!!errors.confirmPassword)}>
+                        <Lock className={`h-[18px] w-[18px] flex-shrink-0 transition-colors ${errors.confirmPassword ? "text-red-400" : "text-zinc-400"}`} strokeWidth={2} />
+                        <input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          placeholder="Repita a senha"
+                          value={confirmPassword}
+                          onChange={(ev) => { setConfirmPassword(ev.target.value); clearError("confirmPassword"); }}
+                          className="min-w-0 flex-1 bg-transparent text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
+                        />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword((v) => !v)}
-                          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white/90 text-zinc-400 transition-colors hover:border-agre-brand/40 hover:bg-white hover:text-zinc-700"
+                          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
                           aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
                         >
                           {showConfirmPassword ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}

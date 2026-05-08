@@ -23,8 +23,8 @@ export function TabBar() {
               <Store className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="font-display text-base font-extrabold text-zinc-900">BoiMarket</p>
-              <p className="text-[11px] font-medium text-agre-muted">Marketplace de gado</p>
+              <p className="font-display text-base font-extrabold tracking-tight text-zinc-900">AgerisMarket</p>
+              <p className="text-[11px] font-medium text-agre-muted">Marketplace de Gado</p>
             </div>
           </Link>
 

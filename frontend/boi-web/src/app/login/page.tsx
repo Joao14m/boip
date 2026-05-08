@@ -109,14 +109,14 @@ export default function LoginPage() {
                   <Store className="h-7 w-7 text-white drop-shadow-sm" strokeWidth={2.25} />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900">BoiMarket</h2>
+                  <h2 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900">AgerisMarket</h2>
                   <p className="text-sm font-medium text-agre-muted">Marketplace de Gado</p>
                 </div>
               </div>
 
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-agre-brand/30 bg-white/90 px-3 py-1 text-xs font-semibold tracking-wide text-agre-dark">
                 <span className="h-1.5 w-1.5 rounded-full bg-agre-brand shadow-[0_0_8px_rgba(82,183,136,0.9)]" />
-                Marketplace verificado · Brasil
+                Marketplace · Brasil
               </div>
 
               <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-zinc-900 lg:text-6xl">
@@ -131,7 +131,7 @@ export default function LoginPage() {
 
               <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-600 lg:text-lg">
                 Conectamos produtores e compradores de todo o Brasil. Encontre as melhores ofertas
-                de gado para corte, reprodução e leite.
+                de gado para corte e reprodução.
               </p>
 
               <div className="mt-10 grid max-w-xl grid-cols-2 gap-4">

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Store, Plus, Filter, Search, X, ChevronDown, ChevronUp,
+  Store, Filter, Search, X, ChevronDown, ChevronUp,
   Heart, Image as ImageIcon, Images, Dumbbell, Calendar, MapPin,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -138,7 +138,8 @@ export default function FeedPage() {
   const renderCard = (item: Listing) => {
     const lot = item.lotSummary;
     const media = item.media ?? [];
-    const firstImage = media.find((m) => m.mediaSlot === 0)?.mediaKey ?? null;
+    const sortedMedia = media.slice().sort((a, b) => a.mediaSlot - b.mediaSlot);
+    const firstImage = sortedMedia[0]?.mediaKey ?? null;
     const photoCount = media.length;
     const location = [lot?.city, lot?.uf].filter(Boolean).join(" - ");
 
@@ -247,26 +248,17 @@ export default function FeedPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-5 sm:px-6 lg:px-8">
-      <header className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="relative hidden h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40 sm:flex">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40 sm:h-12 sm:w-12">
             <span aria-hidden className="absolute inset-x-2 top-0 h-px bg-white/50" />
             <Store className="h-5 w-5 text-white" />
           </div>
-          <div>
-            <h1 className="font-display text-3xl font-extrabold tracking-tight text-zinc-900">Marketplace</h1>
-            <p className="text-sm text-zinc-600">Compra e venda de gado com filtros por lote, preço e perfil.</p>
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900 sm:text-3xl">Marketplace</h1>
+            <p className="text-xs text-zinc-600 sm:text-sm">Compra e venda de gado com filtros por lote, preço e perfil.</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push("/listing/create")}
-          className="group relative flex h-11 items-center gap-1.5 overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 px-4 text-sm font-bold text-white shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-agre-brand/30"
-        >
-          <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-all duration-700 group-hover:left-[120%]" />
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Criar Anúncio</span>
-        </button>
       </header>
 
       <section className="rounded-3xl border border-white/60 bg-white/85 px-4 py-3 shadow-xl shadow-agre-brand/10 ring-1 ring-zinc-200/60 backdrop-blur-sm">

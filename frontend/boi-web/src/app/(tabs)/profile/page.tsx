@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  User as UserIcon, Tag, Settings, Plus, Lock, Edit3, CreditCard,
+  User as UserIcon, Tag, Settings, Lock, Edit3, CreditCard,
   ChevronRight, LogOut, Trash2, Megaphone, Image as ImageIcon,
   Dumbbell, Calendar, Grid3x3,
 } from "lucide-react";
@@ -157,7 +157,7 @@ export default function ProfilePage() {
 
   const renderListingCard = (item: Listing) => {
     const lot = item.lotSummary;
-    const firstImage = item.media?.find((m) => m.mediaSlot === 0)?.mediaKey ?? null;
+    const firstImage = item.media?.slice().sort((a, b) => a.mediaSlot - b.mediaSlot)[0]?.mediaKey ?? null;
     const sc = STATUS_COLOR[item.status] ?? { bg: "bg-zinc-100", text: "text-zinc-700" };
 
     return (
@@ -242,14 +242,14 @@ export default function ProfilePage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-5 sm:px-6 lg:px-8">
-      <header className="mb-5 flex items-center gap-4">
-        <div className="relative hidden h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40 sm:flex">
+      <header className="mb-6 flex items-center gap-3">
+        <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40 sm:h-12 sm:w-12">
           <span aria-hidden className="absolute inset-x-2 top-0 h-px bg-white/50" />
-          <UserIcon className="h-6 w-6 text-white" />
+          <UserIcon className="h-5 w-5 text-white" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-agre-dark">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900 sm:text-3xl">
               {profile ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() : "Perfil"}
             </h1>
             <span className="inline-flex items-center gap-2 rounded-full border border-agre-brand/30 bg-white/90 px-3 py-1 text-xs font-semibold tracking-wide text-agre-dark">
@@ -257,7 +257,7 @@ export default function ProfilePage() {
               Conta verificada
             </span>
           </div>
-          <p className="truncate text-sm text-agre-muted">{profile?.email ?? "Perfil e conta"}</p>
+          <p className="break-all text-xs text-zinc-600 sm:text-sm">{profile?.email ?? "Perfil e conta"}</p>
         </div>
       </header>
 
@@ -287,21 +287,11 @@ export default function ProfilePage() {
       <div className="mt-4 flex-1">
         {activeTab === "anuncios" ? (
           <div>
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="font-display text-base font-extrabold text-agre-dark">Meus Anúncios</h2>
-                <p className="text-xs text-agre-muted">
-                  {listings.length} anúncio{listings.length !== 1 ? "s" : ""} criado{listings.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => router.push("/listing/create")}
-                className="group relative flex h-10 items-center gap-1.5 overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 px-4 text-sm font-bold text-white shadow-md shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-agre-brand/25"
-              >
-                <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-all duration-700 group-hover:left-[120%]" />
-                <Plus className="h-4 w-4" /> Criar Anúncio
-              </button>
+            <div className="mb-4">
+              <h2 className="font-display text-base font-extrabold text-agre-dark">Meus Anúncios</h2>
+              <p className="text-xs text-agre-muted">
+                {listings.length} anúncio{listings.length !== 1 ? "s" : ""} criado{listings.length !== 1 ? "s" : ""}
+              </p>
             </div>
 
             {loadingListings ? (

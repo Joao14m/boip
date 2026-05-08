@@ -16,7 +16,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BoiMarket — Marketplace de Gado",
+  title: "AgerisMarket — Marketplace de Gado",
   description: "Compre e venda gado de forma fácil e segura. Conectamos produtores e compradores de todo o Brasil.",
 };
 

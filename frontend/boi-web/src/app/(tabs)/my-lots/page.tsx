@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Folder, Heart, FolderOpen, Image as ImageIcon, Dumbbell, Calendar, Grid3x3,
+  Folder, Heart, FolderOpen, Image as ImageIcon, Dumbbell, Calendar, Grid3x3, Plus,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -87,7 +87,7 @@ export default function MyLotsPage() {
   const renderCard = (item: Listing, opts?: { favorite?: boolean }) => {
     const lot = item.lotSummary;
     const sc = statusColor(item.status);
-    const firstImage = item.media?.find((m) => m.mediaSlot === 0)?.mediaKey ?? null;
+    const firstImage = item.media?.slice().sort((a, b) => a.mediaSlot - b.mediaSlot)[0]?.mediaKey ?? null;
 
     return (
       <div
@@ -178,15 +178,26 @@ export default function MyLotsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-5 sm:px-6 lg:px-8">
-      <header className="mb-5 flex items-center gap-3">
-        <div className="relative hidden h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40 sm:flex">
-          <span aria-hidden className="absolute inset-x-2 top-0 h-px bg-white/50" />
-          <Folder className="h-5 w-5 text-white" />
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40 sm:h-12 sm:w-12">
+            <span aria-hidden className="absolute inset-x-2 top-0 h-px bg-white/50" />
+            <Folder className="h-5 w-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900 sm:text-3xl">Meus Lotes</h1>
+            <p className="text-xs text-zinc-600 sm:text-sm">Acompanhe seus anúncios, favoritos e status comerciais.</p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-zinc-900">Meus Lotes</h1>
-          <p className="text-sm text-zinc-600">Acompanhe seus anúncios, favoritos e status comerciais.</p>
-        </div>
+        <button
+          type="button"
+          onClick={() => router.push("/listing/create")}
+          className="group relative flex h-11 flex-shrink-0 items-center gap-1.5 overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 px-4 text-sm font-bold text-white shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-agre-brand/30"
+        >
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-all duration-700 group-hover:left-[120%]" />
+          <Plus className="h-4 w-4" />
+          <span>Criar Anúncio</span>
+        </button>
       </header>
 
       <div className="flex w-full rounded-xl border border-zinc-200/70 bg-white/80 p-1 shadow-sm shadow-black/5 sm:w-fit">
@@ -232,14 +243,14 @@ export default function MyLotsPage() {
           )
         ) : (
           <>
-            <div className="mb-4 overflow-x-auto rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-agre-brand/10 ring-1 ring-zinc-200/60 backdrop-blur-sm">
-              <div className="flex gap-2 p-3">
+            <div className="mb-4 rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-agre-brand/10 ring-1 ring-zinc-200/60 backdrop-blur-sm">
+              <div className="flex flex-wrap gap-2 p-3">
                 {STATUS_FILTERS.map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setStatusFilter(s)}
-                    className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                       statusFilter === s
                         ? "bg-gradient-to-br from-agre-brand to-agre-button text-white shadow-md shadow-agre-brand/30"
                         : "border border-zinc-200 bg-white text-zinc-600 hover:border-agre-brand/40"

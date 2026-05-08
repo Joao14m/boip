@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Calendar,
   Dumbbell,
   FileText,
@@ -14,6 +13,7 @@ import {
   Tag,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { PageHeader } from "@/components/PageHeader";
 
 type CattleLotProfile = {
   id?: string;
@@ -74,6 +74,8 @@ type LotLoadState = {
   listings: Listing[];
   error: string;
 };
+
+const EMPTY_LISTINGS: Listing[] = [];
 
 const SEX_LABEL: Record<string, string> = {
   M: "Macho",
@@ -165,7 +167,7 @@ export default function LotDetailPage() {
   const loading = Boolean(id && loadState?.id !== id);
   const lot = id && loadState?.id === id ? loadState.lot : null;
   const location = id && loadState?.id === id ? loadState.location : null;
-  const listings = id && loadState?.id === id ? loadState.listings : [];
+  const listings = id && loadState?.id === id ? loadState.listings : EMPTY_LISTINGS;
   const error = id && loadState?.id === id ? loadState.error : "";
 
   const activeListing = useMemo(
@@ -194,7 +196,8 @@ export default function LotDetailPage() {
   }
 
   const profile = lot.currentProfile;
-  const firstImage = activeListing?.media?.find((item) => item.mediaSlot === 0)?.mediaKey ?? null;
+  const sortedMedia = activeListing?.media?.slice().sort((a, b) => a.mediaSlot - b.mediaSlot) ?? [];
+  const firstImage = sortedMedia[0]?.mediaKey ?? null;
   const locationText = [location?.municipality, location?.uf].filter(Boolean).join(" - ");
 
   return (
@@ -321,23 +324,6 @@ export default function LotDetailPage() {
         </section>
       </div>
     </main>
-  );
-}
-
-function PageHeader({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-agre-dark hover:bg-agre-pale"
-        aria-label="Voltar"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </button>
-      <h1 className="font-display text-base font-extrabold text-agre-dark">{title}</h1>
-      <div className="h-9 w-9" />
-    </header>
   );
 }
 

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   BadgeCheck,
   Banknote,
   Calendar,
@@ -17,6 +16,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { PageHeader } from "@/components/PageHeader";
 
 type ListingMedia = {
   id?: string;
@@ -36,7 +37,6 @@ type LotSummary = {
   avgWeightKg?: number;
   avgAgeMonths?: number;
   uf?: string;
-  city?: string;
 };
 
 type Listing = {
@@ -111,6 +111,7 @@ function formatDate(value?: string | null) {
 export default function ListingDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { userId } = useAuth();
   const id = getParam(params.id);
 
   const [loadState, setLoadState] = useState<ListingLoadState | null>(null);
@@ -146,7 +147,8 @@ export default function ListingDetailPage() {
 
   const activeMedia = media.find((item) => item.mediaSlot === activeMediaSlot) ?? media[0] ?? null;
   const lot = listing?.lotSummary;
-  const canBuy = listing?.status === "ACTIVE";
+  const isOwner = Boolean(listing && userId && listing.sellerUserId === userId);
+  const canBuy = listing?.status === "ACTIVE" && !isOwner;
 
   const handleBuy = async () => {
     if (!listing) return;
@@ -274,7 +276,9 @@ export default function ListingDetailPage() {
 
             {!canBuy && (
               <p className="mt-2 text-center text-xs text-agre-muted">
-                Compra disponível apenas para anúncios ativos.
+                {isOwner
+                  ? "Este é o seu próprio anúncio."
+                  : "Compra disponível apenas para anúncios ativos."}
               </p>
             )}
             {paymentError && (
@@ -312,23 +316,6 @@ export default function ListingDetailPage() {
         </aside>
       </div>
     </main>
-  );
-}
-
-function PageHeader({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-agre-dark hover:bg-agre-pale"
-        aria-label="Voltar"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </button>
-      <h1 className="font-display text-base font-extrabold text-agre-dark">{title}</h1>
-      <div className="h-9 w-9" />
-    </header>
   );
 }
 
