@@ -11,7 +11,8 @@
   --color-agre-muted:        #5A7A65;
   --color-agre-placeholder:  #9DBFAB;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    var(--font-inter),   ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
 html, body {

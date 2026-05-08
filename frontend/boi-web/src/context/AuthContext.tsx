@@ -32,7 +32,7 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isFirebaseConfigured && !!auth);
   const [onboarded, setOnboarded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -49,7 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
-      setLoading(false);
       return;
     }
     setPersistence(auth, browserLocalPersistence).catch(() => {});
