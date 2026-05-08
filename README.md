@@ -7,6 +7,7 @@ A mobile marketplace for buying and selling cattle. Sellers can list lots with d
 | Layer | Technology |
 |---|---|
 | Mobile | React Native + Expo Router (TypeScript) |
+| Web | Next.js 15 + React + TypeScript |
 | Backend | Java 21 + Spring Boot 3 |
 | Database | PostgreSQL 16 |
 | Migrations | Flyway |
@@ -21,7 +22,8 @@ A mobile marketplace for buying and selling cattle. Sellers can list lots with d
 /
 ├── backend/          # Spring Boot API
 ├── frontend/
-│   └── boi-app/      # Expo React Native app
+│   ├── boi-app/      # Expo React Native app
+│   └── boi-web/      # Next.js web app
 ├── secrets/          # Firebase service account key (git-ignored)
 ├── .env.example      # Backend env template
 ├── docker-compose.yml
@@ -128,6 +130,8 @@ APP_WEBHOOK_AUTH_TOKEN=
 
 ### 3. Configure the frontend
 
+**Mobile (Expo):**
+
 ```bash
 cp frontend/boi-app/.env.example frontend/boi-app/.env
 ```
@@ -146,10 +150,34 @@ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
 EXPO_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
 ```
 
+**Web (Next.js):**
+
+```bash
+cp frontend/boi-web/.env.example frontend/boi-web/.env.local
+```
+
+Edit `frontend/boi-web/.env.local` with the same Firebase project values:
+```env
+# localhost for the web; use your LAN IP only if testing from another device
+NEXT_PUBLIC_API_BASE=http://localhost:8080
+
+# Same Firebase web config as the mobile app
+NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
+```
+
 ### 4. Install frontend dependencies
 
 ```bash
 cd frontend/boi-app
+npm install
+cd ../..
+
+cd frontend/boi-web
 npm install
 cd ../..
 ```
@@ -178,8 +206,11 @@ Press `Ctrl+C` to stop everything (it cleans up the webhook and stops all servic
 # Backend only (no webhook support)
 make up
 
-# Frontend only
+# Mobile (Expo)
 cd frontend/boi-app && npx expo start
+
+# Web (Next.js)
+cd frontend/boi-web && npm run dev
 ```
 
 Scan the QR code with Expo Go on your phone, or press `a` for Android emulator / `i` for iOS simulator.
