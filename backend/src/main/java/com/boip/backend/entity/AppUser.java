@@ -30,7 +30,7 @@ public class AppUser {
     @Column(name = "last_name", nullable = false, length = 120)
     private String lastName;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true, columnDefinition = "citext")
     private String email;
 
     @Column(name = "phone", nullable = false, length = 20)

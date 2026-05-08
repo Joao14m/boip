@@ -3,6 +3,9 @@ package com.boip.backend.entity;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,7 +30,8 @@ public class Location {
     @Column(name = "municipality", nullable = false, length = 120)
     private String municipality;
 
-    @Column(name = "uf", nullable = false, length = 2)
+    @Column(name = "uf", nullable = false, columnDefinition = "char(2)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String uf;
 
     @Column(name = "ibge_code", nullable = false, length = 7, unique = true)

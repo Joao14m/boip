@@ -5,7 +5,9 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,7 +42,8 @@ public class Listing {
     @Column(name = "price_amount", nullable = false, precision = 14, scale = 2)
     private BigDecimal priceAmount;
 
-    @Column(name = "currency", nullable = false, length = 3)
+    @Column(name = "currency", nullable = false, columnDefinition = "char(3)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String currency;
 
     @Column(name = "published_at")
