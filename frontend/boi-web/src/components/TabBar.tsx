@@ -16,16 +16,13 @@ export function TabBar() {
   return (
     <>
       <header className="z-30 hidden border-b border-white/60 bg-white/70 backdrop-blur-md md:block">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
-          <Link href="/feed" className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40">
-              <span aria-hidden className="absolute inset-x-2 top-0 h-px bg-white/50" />
-              <Store className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="font-display text-base font-extrabold tracking-tight text-zinc-900">AgerisMarket</p>
-              <p className="text-[11px] font-medium text-agre-muted">Marketplace de Gado</p>
-            </div>
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
+          <Link href="/feed" className="flex items-center">
+            <img
+              src="/AgerisLogo.png"
+              alt="AgerisMarket — Marketplace de Gado"
+              className="h-16 w-auto"
+            />
           </Link>
 
           <nav className="flex items-center rounded-xl border border-zinc-200/70 bg-white/80 p-1 shadow-sm shadow-black/5">

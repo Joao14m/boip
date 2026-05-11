@@ -177,7 +177,7 @@ export default function LotDetailPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F5F5F5] px-6">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF5EC] px-6">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-agre-brand border-t-transparent" />
       </main>
     );
@@ -185,7 +185,7 @@ export default function LotDetailPage() {
 
   if (error || !lot) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5]">
+      <main className="min-h-screen bg-[#FAF5EC]">
         <PageHeader title="Lote" onBack={() => router.back()} />
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-16 text-center">
           <Layers className="h-12 w-12 text-zinc-300" />
@@ -201,7 +201,7 @@ export default function LotDetailPage() {
   const locationText = [location?.municipality, location?.uf].filter(Boolean).join(" - ");
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5]">
+    <main className="min-h-screen bg-[#FAF5EC]">
       <PageHeader title="Detalhes do Lote" onBack={() => router.back()} />
 
       <div className="mx-auto grid max-w-6xl gap-4 px-4 py-4 lg:grid-cols-[minmax(320px,0.7fr)_minmax(0,1.3fr)]">

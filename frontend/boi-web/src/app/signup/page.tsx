@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
-  Store,
   Mail,
   Lock,
   Eye,
@@ -201,7 +200,7 @@ export default function SignupPage() {
             <div
               className="absolute inset-0 opacity-[0.035]"
               style={{
-                backgroundImage: "radial-gradient(circle, #0F1C15 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(circle, #3D2817 1px, transparent 1px)",
                 backgroundSize: "28px 28px",
               }}
             />
@@ -211,16 +210,12 @@ export default function SignupPage() {
           <div className="relative flex flex-col gap-10 px-6 py-10 sm:px-10 sm:py-14 lg:flex-row lg:items-start lg:gap-16 lg:px-16 lg:py-20">
             {/* Left: marketing */}
             <section className="flex-1">
-              <div className="mb-10 flex items-center gap-4">
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/50">
-                  <span aria-hidden className="absolute inset-0 -z-10 rounded-2xl bg-agre-brand/60 blur-xl" />
-                  <span aria-hidden className="absolute inset-x-2 top-0 h-px bg-white/50" />
-                  <Store className="h-7 w-7 text-white drop-shadow-sm" strokeWidth={2.25} />
-                </div>
-                <div>
-                  <h2 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900">AgerisMarket</h2>
-                  <p className="text-sm font-medium text-agre-muted">Marketplace de Gado</p>
-                </div>
+              <div className="mb-10 flex items-center">
+                <img
+                  src="/AgerisLogo.png"
+                  alt="AgerisMarket — Marketplace de Gado"
+                  className="h-20 w-auto"
+                />
               </div>
 
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-agre-brand/30 bg-white/90 px-3 py-1 text-xs font-semibold tracking-wide text-agre-dark">
@@ -531,7 +526,7 @@ export default function SignupPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="group relative mt-7 flex h-13 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 py-3.5 text-base font-bold tracking-wide text-white shadow-lg shadow-black/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-agre-brand/35 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-lg"
+                    className="group relative mt-7 flex h-13 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-agre-dark via-agre-dark to-[#2A1B0F] py-3.5 text-base font-bold tracking-wide text-white shadow-lg shadow-black/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-agre-brand/35 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-lg"
                   >
                     <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-all duration-700 group-hover:left-[120%]" />
                     <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />

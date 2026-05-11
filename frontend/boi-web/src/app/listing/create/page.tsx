@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Camera,
-  Image as ImageIcon,
+  ClipboardList,
+  DollarSign,
+  Images,
   Loader2,
+  Megaphone,
+  Tag,
   X,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -15,9 +19,9 @@ import { PageHeader } from "@/components/PageHeader";
 
 const BREEDS = ["Nelore", "Angus", "Brahman", "Hereford", "Senepol", "Gir", "Guzerá", "Tabapuã"];
 const PURPOSES = [
-  { label: "Corte",       value: "Corte" },
-  { label: "Leite",       value: "Leite" },
-  { label: "Reprodução",  value: "Reprodução" },
+  { label: "Corte",      value: "Corte" },
+  { label: "Leite",      value: "Leite" },
+  { label: "Reprodução", value: "Reprodução" },
 ];
 const SEXES = [
   { label: "Macho", value: "M" },
@@ -170,19 +174,36 @@ export default function CreateListingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5]">
+    <main className="min-h-screen bg-[#FAF5EC]">
       <PageHeader title="Novo Anúncio" onBack={() => router.back()} />
 
-      <div className="mx-auto max-w-3xl px-4 py-6">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          {formError && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">
-              {formError}
-            </div>
-          )}
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6">
+        <header className="flex items-center gap-3">
+          <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-agre-brand to-agre-button shadow-lg shadow-agre-brand/40 sm:h-12 sm:w-12">
+            <span aria-hidden className="absolute inset-x-2 top-0 h-px bg-white/50" />
+            <Megaphone className="h-5 w-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900 sm:text-3xl">
+              Criar Anúncio
+            </h1>
+            <p className="text-xs text-zinc-600 sm:text-sm">
+              Preencha os dados do lote, perfil dos animais e preço para publicar.
+            </p>
+          </div>
+        </header>
 
-          <SectionTitle>Dados do Lote</SectionTitle>
+        {formError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+            {formError}
+          </div>
+        )}
 
+        <Section
+          icon={ClipboardList}
+          title="Dados do Lote"
+          subtitle="Identifique o lote e quantos animais ele tem."
+        >
           <Field label="Código do Lote" error={errors.lotCode}>
             <input
               type="text"
@@ -204,11 +225,15 @@ export default function CreateListingPage() {
               className={inputClass(Boolean(errors.headCount))}
             />
           </Field>
+        </Section>
 
-          <SectionTitle className="mt-6">Perfil do Lote</SectionTitle>
-
+        <Section
+          icon={Tag}
+          title="Perfil do Lote"
+          subtitle="Características que ajudam o comprador a avaliar."
+        >
           <Field label="Raça">
-            <div className="-mx-1 flex flex-wrap gap-2 px-1">
+            <div className="flex flex-wrap gap-2">
               {BREEDS.map((b) => (
                 <Chip key={b} active={breed === b} onClick={() => setBreed(breed === b ? "" : b)}>
                   {b}
@@ -274,13 +299,25 @@ export default function CreateListingPage() {
               className={`${inputClass(false)} resize-none`}
             />
           </Field>
+        </Section>
 
-          <SectionTitle className="mt-6">Fotos</SectionTitle>
-
+        <Section
+          icon={Images}
+          title="Fotos"
+          subtitle={`Até ${MAX_IMAGES} fotos. A primeira será a capa do anúncio.`}
+        >
           <div className="flex flex-wrap gap-3">
             {images.map((img, i) => (
-              <div key={img.previewUrl} className="relative h-28 w-28 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100">
+              <div
+                key={img.previewUrl}
+                className="relative h-28 w-28 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm"
+              >
                 <img src={img.previewUrl} alt="" className="h-full w-full object-cover" />
+                {i === 0 && (
+                  <span className="absolute left-1.5 top-1.5 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-agre-dark shadow">
+                    Capa
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => removeImage(i)}
@@ -295,10 +332,10 @@ export default function CreateListingPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex h-28 w-28 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed text-xs font-semibold transition-colors ${
+                className={`flex h-28 w-28 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed text-xs font-semibold transition-colors ${
                   errors.images
                     ? "border-red-400 bg-red-50 text-red-500"
-                    : "border-zinc-300 bg-zinc-50 text-zinc-500 hover:border-agre-button hover:text-agre-dark"
+                    : "border-zinc-300 bg-zinc-50 text-agre-muted hover:border-agre-button hover:text-agre-dark"
                 }`}
               >
                 <Camera className="h-6 w-6" />
@@ -318,13 +355,17 @@ export default function CreateListingPage() {
             }}
           />
           {errors.images && (
-            <p className="mt-2 text-xs font-semibold text-red-500">{errors.images}</p>
+            <p className="mt-3 text-xs font-semibold text-red-500">{errors.images}</p>
           )}
+        </Section>
 
-          <SectionTitle className="mt-6">Preço</SectionTitle>
-
+        <Section
+          icon={DollarSign}
+          title="Preço"
+          subtitle="Defina como o valor será apresentado ao comprador."
+        >
           <Field label="Tipo de preço">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Chip active={priceType === "TOTAL"} onClick={() => setPriceType("TOTAL")}>
                 Total
               </Chip>
@@ -344,26 +385,27 @@ export default function CreateListingPage() {
               className={inputClass(Boolean(errors.priceAmount))}
             />
           </Field>
+        </Section>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
-            <button
-              type="button"
-              onClick={() => buildAndSubmit(true)}
-              disabled={loading}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-agre-button text-sm font-extrabold text-white transition-colors hover:bg-agre-dark disabled:cursor-not-allowed disabled:bg-zinc-300"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-              {loading ? "Criando..." : "Publicar Anúncio"}
-            </button>
-            <button
-              type="button"
-              onClick={() => buildAndSubmit(false)}
-              disabled={loading}
-              className="flex h-12 flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white text-sm font-bold text-agre-dark transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Salvar Rascunho
-            </button>
-          </div>
+        <div className="flex flex-col gap-3 sm:flex-row-reverse">
+          <button
+            type="button"
+            onClick={() => buildAndSubmit(true)}
+            disabled={loading}
+            className="group/btn relative flex h-12 flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-agre-dark via-agre-dark to-[#2A1B0F] text-sm font-bold text-white shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-agre-brand/30 disabled:cursor-not-allowed disabled:from-zinc-400 disabled:to-zinc-400 disabled:shadow-none disabled:hover:translate-y-0"
+          >
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-all duration-700 group-hover/btn:left-[120%]" />
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Megaphone className="h-4 w-4" />}
+            {loading ? "Criando..." : "Publicar Anúncio"}
+          </button>
+          <button
+            type="button"
+            onClick={() => buildAndSubmit(false)}
+            disabled={loading}
+            className="flex h-12 flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white/90 text-sm font-bold text-agre-dark transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Salvar Rascunho
+          </button>
         </div>
       </div>
     </main>
@@ -372,18 +414,37 @@ export default function CreateListingPage() {
 
 function inputClass(hasError: boolean) {
   return [
-    "w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-agre-dark outline-none transition-colors",
+    "w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors",
     "placeholder:text-zinc-400",
     "focus:border-agre-button focus:ring-2 focus:ring-agre-button/20",
     hasError ? "border-red-400" : "border-zinc-200",
   ].join(" ");
 }
 
-function SectionTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Section({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <h2 className={`mb-4 font-display text-base font-extrabold text-agre-dark ${className}`}>
-      {children}
-    </h2>
+    <section className="rounded-3xl border border-white/60 bg-white/90 p-5 shadow-lg shadow-black/5 ring-1 ring-zinc-200/60 sm:p-6">
+      <div className="mb-5 flex items-start gap-3">
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-agre-pale text-agre-button">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="font-display text-sm font-extrabold text-agre-dark">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-xs text-agre-muted">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
   );
 }
 
@@ -397,10 +458,12 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-4">
-      <label className="mb-1.5 block text-xs font-semibold text-agre-dark">{label}</label>
+    <div>
+      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-agre-muted">
+        {label}
+      </label>
       {children}
-      {error && <p className="mt-1 text-xs font-semibold text-red-500">{error}</p>}
+      {error && <p className="mt-1.5 text-xs font-semibold text-red-500">{error}</p>}
     </div>
   );
 }
@@ -418,10 +481,10 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
         active
-          ? "border-agre-button bg-agre-button text-white shadow shadow-agre-brand/20"
-          : "border-zinc-200 bg-white text-zinc-600 hover:border-agre-brand/40 hover:text-agre-dark"
+          ? "bg-gradient-to-br from-agre-brand to-agre-button text-white shadow-md shadow-agre-brand/30"
+          : "border border-zinc-200 bg-white text-zinc-600 hover:border-agre-brand/40 hover:text-agre-dark"
       }`}
     >
       {children}

@@ -167,7 +167,7 @@ export default function ListingDetailPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F5F5F5] px-6">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF5EC] px-6">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-agre-brand border-t-transparent" />
       </main>
     );
@@ -175,7 +175,7 @@ export default function ListingDetailPage() {
 
   if (error || !listing) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5]">
+      <main className="min-h-screen bg-[#FAF5EC]">
         <PageHeader title="Anúncio" onBack={() => router.back()} />
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-16 text-center">
           <ImageIcon className="h-12 w-12 text-zinc-300" />
@@ -186,7 +186,7 @@ export default function ListingDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5]">
+    <main className="min-h-screen bg-[#FAF5EC]">
       <PageHeader title="Detalhes do Anúncio" onBack={() => router.back()} />
 
       <div className="mx-auto grid max-w-6xl gap-4 px-4 py-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
