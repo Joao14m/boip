@@ -113,7 +113,7 @@ export default function PaymentPage() {
 
   if (confirmed) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FAF5EC] px-4">
+      <main className="flex min-h-screen items-center justify-center bg-[#F0EBDD] px-4">
         <section className="flex w-full max-w-md flex-col items-center rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <CheckCircle2 className="h-20 w-20 text-agre-brand" />
           <h1 className="mt-4 font-display text-2xl font-extrabold text-agre-dark">Pagamento confirmado!</h1>
@@ -133,7 +133,7 @@ export default function PaymentPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAF5EC]">
+    <main className="min-h-screen bg-[#F0EBDD]">
       <PageHeader title="Pagamento via PIX" onBack={() => router.back()} />
 
       <div className="mx-auto max-w-2xl px-4 py-5">

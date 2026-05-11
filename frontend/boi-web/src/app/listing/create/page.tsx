@@ -174,7 +174,7 @@ export default function CreateListingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#FAF5EC]">
+    <main className="min-h-screen bg-[#F0EBDD]">
       <PageHeader title="Novo Anúncio" onBack={() => router.back()} />
 
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6">
