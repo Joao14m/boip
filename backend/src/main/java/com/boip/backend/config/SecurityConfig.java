@@ -34,7 +34,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,    "/api/webhooks").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/api/webhooks/register").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/webhooks/*").permitAll()
-                        // Everything else (listings feed, locations, user lookups, etc.) requires login.
+                        // Reference data needed by the signup form before the user has a Firebase token.
+                        .requestMatchers(HttpMethod.GET, "/api/locations", "/api/locations/*").permitAll()
+                        // Everything else (listings feed, user lookups, etc.) requires login.
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)

@@ -146,7 +146,11 @@ print("Backend is ready!")
 # ── 4. Delete old webhooks and register a new one ──
 admin_headers = {"asaas-access-token": webhook_token}
 
-print("Cleaning up old Asaas webhooks...")
+# Only delete webhooks whose URL points at a local tunnel/host. The Asaas account is
+# shared with fly.io, so deleting indiscriminately would wipe the production webhook.
+LOCAL_URL_MARKERS = ("trycloudflare.com", "localhost", "127.0.0.1")
+
+print("Cleaning up old local Asaas webhooks...")
 try:
     # makes the GET request and converts the raw json string into a python dict/list
     old_webhooks = requests.get(
@@ -154,11 +158,16 @@ try:
     ).json()
     for wh in old_webhooks.get("data", []):  # looping through and deleting each one
         wh_id = wh.get("id")
-        if wh_id:  # if id is found, delete
-            print(f"  Deleting old webhook: {wh_id}")
+        wh_url = wh.get("url", "")
+        if not wh_id:
+            continue
+        if any(marker in wh_url for marker in LOCAL_URL_MARKERS):
+            print(f"  Deleting old local webhook: {wh_url}")
             requests.delete(
                 f"http://localhost:{BACKEND_PORT}/api/webhooks/{wh_id}", headers=admin_headers, timeout=5
             )
+        else:
+            print(f"  Skipping non-local webhook: {wh_url}")
 except Exception as e:
     print(f"  Warning: could not clean old webhooks: {e}")
 
