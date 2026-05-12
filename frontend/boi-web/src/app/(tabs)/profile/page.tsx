@@ -394,7 +394,7 @@ export default function ProfilePage() {
                         <button
                           type="button"
                           onClick={handleSave}
-                          className="flex-1 rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 py-2 text-sm font-bold text-white shadow-md shadow-black/20"
+                          className="flex-1 rounded-xl bg-gradient-to-br from-agre-dark via-agre-dark to-[#2A1B0F] py-2 text-sm font-bold text-white shadow-md shadow-black/20"
                         >
                           Salvar
                         </button>
