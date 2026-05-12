@@ -36,9 +36,6 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "missing_email");
         }
 
-        if (!me.emailVerified())
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "email_not_verified");
-
         // Regra/consistência: locationId precisa existir
         // (req.locationId já foi validado como NOT NULL no DTO)
         if (!locationRepository.existsById(req.locationId())) {

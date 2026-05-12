@@ -1,11 +1,14 @@
 package com.boip.backend.service;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -28,6 +31,7 @@ import com.boip.backend.entity.CattleLot;
 import com.boip.backend.entity.CattleLotProfile;
 import com.boip.backend.entity.Listing;
 import com.boip.backend.entity.ListingMedia;
+import com.boip.backend.entity.Location;
 import com.boip.backend.mapper.ListingMapper;
 import com.boip.backend.repository.CattleLotProfileRepository;
 import com.boip.backend.repository.CattleLotRepository;
@@ -126,12 +130,12 @@ public class ListingService {
 
     public PageResponseDto<ListingResponseDto> findBySeller(UUID sellerUserId, int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return PageResponseDto.of(listingRepository.findAllBySellerUserId(sellerUserId, pageable).map(this::toDto));
+        return toDtoPage(listingRepository.findAllBySellerUserId(sellerUserId, pageable));
     }
 
     public PageResponseDto<ListingResponseDto> findByLot(UUID lotId, int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return PageResponseDto.of(listingRepository.findAllByLotId(lotId, pageable).map(this::toDto));
+        return toDtoPage(listingRepository.findAllByLotId(lotId, pageable));
     }
 
     public PageResponseDto<ListingResponseDto> findByStatus(String status, int page, int size) {
@@ -140,7 +144,7 @@ public class ListingService {
                     "Invalid status. Must be one of: " + VALID_STATUSES);
         }
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return PageResponseDto.of(listingRepository.findAllByStatus(status, pageable).map(this::toDto));
+        return toDtoPage(listingRepository.findAllByStatus(status, pageable));
     }
 
     @Transactional
@@ -245,12 +249,64 @@ public class ListingService {
     }
 
     private ListingResponseDto toDto(Listing entity) {
-        List<ListingMediaResponseDto> media = listingMediaRepository
-                .findAllByListingId(entity.getId())
+        List<Listing> single = List.of(entity);
+        Map<UUID, List<ListingMedia>> mediaByListing = fetchMediaMap(single);
+        Map<UUID, CattleLot> lotsById = fetchLotMap(single);
+        Map<UUID, CattleLotProfile> latestProfileByLot = fetchLatestProfileMap(lotsById.values());
+        Map<UUID, Location> locationsById = fetchLocationMap(lotsById.values());
+        return buildDto(entity, mediaByListing, lotsById, latestProfileByLot, locationsById);
+    }
+
+    private PageResponseDto<ListingResponseDto> toDtoPage(Page<Listing> page) {
+        List<Listing> listings = page.getContent();
+        Map<UUID, List<ListingMedia>> mediaByListing = fetchMediaMap(listings);
+        Map<UUID, CattleLot> lotsById = fetchLotMap(listings);
+        Map<UUID, CattleLotProfile> latestProfileByLot = fetchLatestProfileMap(lotsById.values());
+        Map<UUID, Location> locationsById = fetchLocationMap(lotsById.values());
+        return PageResponseDto.of(page.map(l ->
+                buildDto(l, mediaByListing, lotsById, latestProfileByLot, locationsById)));
+    }
+
+    private Map<UUID, List<ListingMedia>> fetchMediaMap(Collection<Listing> listings) {
+        Set<UUID> ids = listings.stream().map(Listing::getId).collect(Collectors.toSet());
+        if (ids.isEmpty()) return Map.of();
+        return listingMediaRepository.findAllByListingIdIn(ids).stream()
+                .collect(Collectors.groupingBy(ListingMedia::getListingId));
+    }
+
+    private Map<UUID, CattleLot> fetchLotMap(Collection<Listing> listings) {
+        Set<UUID> ids = listings.stream().map(Listing::getLotId).collect(Collectors.toSet());
+        if (ids.isEmpty()) return Map.of();
+        return cattleLotRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(CattleLot::getId, l -> l));
+    }
+
+    private Map<UUID, CattleLotProfile> fetchLatestProfileMap(Collection<CattleLot> lots) {
+        Set<UUID> lotIds = lots.stream().map(CattleLot::getId).collect(Collectors.toSet());
+        if (lotIds.isEmpty()) return Map.of();
+        return cattleLotProfileRepository.findLatestByLotIdIn(lotIds).stream()
+                .collect(Collectors.toMap(CattleLotProfile::getLotId, p -> p));
+    }
+
+    private Map<UUID, Location> fetchLocationMap(Collection<CattleLot> lots) {
+        Set<UUID> ids = lots.stream().map(CattleLot::getLocationId).collect(Collectors.toSet());
+        if (ids.isEmpty()) return Map.of();
+        return locationRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(Location::getId, l -> l));
+    }
+
+    private ListingResponseDto buildDto(Listing entity,
+                                        Map<UUID, List<ListingMedia>> mediaByListing,
+                                        Map<UUID, CattleLot> lotsById,
+                                        Map<UUID, CattleLotProfile> latestProfileByLot,
+                                        Map<UUID, Location> locationsById) {
+        List<ListingMediaResponseDto> media = mediaByListing.getOrDefault(entity.getId(), List.of())
                 .stream().map(ListingMapper::toDto).toList();
-
-        LotSummaryDto lotSummary = buildLotSummary(entity.getLotId());
-
+        CattleLot lot = lotsById.get(entity.getLotId());
+        LotSummaryDto lotSummary = (lot == null) ? null : buildLotSummary(
+                lot,
+                latestProfileByLot.get(lot.getId()),
+                locationsById.get(lot.getLocationId()));
         return ListingMapper.toDto(entity, media, lotSummary);
     }
 
@@ -277,20 +333,8 @@ public class ListingService {
         }
     }
 
-    private LotSummaryDto buildLotSummary(UUID lotId) {
-        // Presentational only — lot summaries are shown on the public marketplace feed,
-        // so no caller-ownership filter here. Ownership is enforced at write time (see create()).
-        CattleLot lot = cattleLotRepository.findById(lotId).orElse(null);
-        if (lot == null) return null;
-
-        CattleLotProfile profile = cattleLotProfileRepository
-                .findTopByLotIdOrderByProfileVersionDesc(lotId)
-                .orElse(null);
-
-        String uf = locationRepository.findById(lot.getLocationId())
-                .map(l -> l.getUf())
-                .orElse(null);
-
+    // Pure builder — callers must pre-fetch lot, profile, location to avoid N+1.
+    private LotSummaryDto buildLotSummary(CattleLot lot, CattleLotProfile profile, Location location) {
         return LotSummaryDto.builder()
                 .lotId(lot.getId())
                 .lotCode(lot.getLotCode())
@@ -300,7 +344,7 @@ public class ListingService {
                 .purpose(profile != null ? profile.getPurpose() : null)
                 .avgWeightKg(profile != null ? profile.getAvgWeightKg() : null)
                 .avgAgeMonths(profile != null ? profile.getAvgAgeMonths() : null)
-                .uf(uf)
+                .uf(location != null ? location.getUf() : null)
                 .build();
     }
 }

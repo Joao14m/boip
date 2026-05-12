@@ -2,9 +2,9 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
-RUN mvn dependency:go-offline -q
+RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -q
 COPY src ./src
-RUN mvn -q -DskipTests package
+RUN --mount=type=cache,target=/root/.m2 mvn -q -DskipTests package
 RUN java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
 # run stage

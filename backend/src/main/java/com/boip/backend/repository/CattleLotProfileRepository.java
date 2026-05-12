@@ -1,5 +1,6 @@
 package com.boip.backend.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,4 +20,14 @@ public interface CattleLotProfileRepository extends JpaRepository<CattleLotProfi
 
     @Query("SELECT COALESCE(MAX(p.profileVersion), 0) FROM CattleLotProfile p WHERE p.lotId = :lotId")
     Integer findMaxProfileVersionByLotId(UUID lotId);
+
+    @Query("""
+        SELECT p FROM CattleLotProfile p
+        WHERE p.lotId IN :lotIds
+          AND p.profileVersion = (
+            SELECT MAX(p2.profileVersion) FROM CattleLotProfile p2
+            WHERE p2.lotId = p.lotId
+          )
+        """)
+    List<CattleLotProfile> findLatestByLotIdIn(Collection<UUID> lotIds);
 }

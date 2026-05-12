@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import {
   Mail,
   Lock,
@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { api } from "@/lib/api";
-import { useAuth } from "@/context/AuthContext";
 
 const REGIONS = [
   { uf: "RJ", name: "Rio de Janeiro" },
@@ -65,7 +64,6 @@ const isValidCnpj = (doc: string): boolean => {
 
 export default function SignupPage() {
   const router = useRouter();
-  const { refreshMe } = useAuth();
 
   const [firstName, setFirstName]                     = useState("");
   const [lastName, setLastName]                       = useState("");
@@ -148,8 +146,8 @@ export default function SignupPage() {
         carNumber: hasCar ? carNumber.trim() : null,
         locationId: match.id,
       });
-      await refreshMe();
-      router.replace("/feed");
+      await signOut(auth);
+      router.replace("/login");
     } catch (e) {
       const code = (e as { code?: string })?.code ?? "";
       const msg  = (e as { message?: string })?.message;
