@@ -28,7 +28,6 @@ secrets/
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 *.log
-backend/fly.toml
 
 # Node / React Native (Expo)
 **/node_modules/
