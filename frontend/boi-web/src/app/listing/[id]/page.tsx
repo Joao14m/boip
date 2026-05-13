@@ -108,6 +108,8 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(value));
 }
 
+const BUYING_ENABLED = false;
+
 export default function ListingDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -148,7 +150,7 @@ export default function ListingDetailPage() {
   const activeMedia = media.find((item) => item.mediaSlot === activeMediaSlot) ?? media[0] ?? null;
   const lot = listing?.lotSummary;
   const isOwner = Boolean(listing && userId && listing.sellerUserId === userId);
-  const canBuy = listing?.status === "ACTIVE" && !isOwner;
+  const canBuy = BUYING_ENABLED && listing?.status === "ACTIVE" && !isOwner;
 
   const handleBuy = async () => {
     if (!listing) return;
@@ -271,14 +273,20 @@ export default function ListingDetailPage() {
               className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-agre-button text-sm font-extrabold text-white transition-colors hover:bg-agre-dark disabled:cursor-not-allowed disabled:bg-zinc-300"
             >
               {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              {paying ? "Criando pagamento..." : "Comprar com PIX"}
+              {paying
+                ? "Criando pagamento..."
+                : BUYING_ENABLED
+                  ? "Comprar com PIX"
+                  : "Não é possível no momento"}
             </button>
 
             {!canBuy && (
               <p className="mt-2 text-center text-xs text-agre-muted">
-                {isOwner
-                  ? "Este é o seu próprio anúncio."
-                  : "Compra disponível apenas para anúncios ativos."}
+                {!BUYING_ENABLED
+                  ? "Compras temporariamente indisponíveis."
+                  : isOwner
+                    ? "Este é o seu próprio anúncio."
+                    : "Compra disponível apenas para anúncios ativos."}
               </p>
             )}
             {paymentError && (
