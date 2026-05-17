@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
@@ -209,11 +210,13 @@ export default function SignupPage() {
             {/* Left: marketing */}
             <section className="flex-1">
               <div className="mb-10 flex items-center">
-                <img
-                  src="/AgerisLogo.png"
-                  alt="AgerisMarket — Marketplace de Gado"
-                  className="h-20 w-auto"
-                />
+                <Link href="/" className="inline-flex items-center transition-transform duration-300 hover:-translate-y-0.5">
+                  <img
+                    src="/AgerisLogo.png"
+                    alt="AgerisMarket — Marketplace de Gado"
+                    className="h-20 w-auto"
+                  />
+                </Link>
               </div>
 
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-agre-brand/30 bg-white/90 px-3 py-1 text-xs font-semibold tracking-wide text-agre-dark">
@@ -545,6 +548,10 @@ export default function SignupPage() {
               </div>
             </section>
           </div>
+
+          <p className="relative pb-6 text-center text-xs text-agre-muted">
+            © AgerisMarket — Marketplace de Gado
+          </p>
         </div>
       </div>
     </div>

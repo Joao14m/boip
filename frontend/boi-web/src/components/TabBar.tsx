@@ -16,12 +16,12 @@ export function TabBar() {
   return (
     <>
       <header className="z-30 hidden border-b border-white/60 bg-white/70 backdrop-blur-md md:block">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-          <Link href="/feed" className="flex items-center">
+        <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6 lg:px-8">
+          <Link href="/" className="flex items-center">
             <img
               src="/AgerisLogo.png"
               alt="AgerisMarket — Marketplace de Gado"
-              className="h-16 w-auto"
+              className="h-20 w-auto"
             />
           </Link>
 
