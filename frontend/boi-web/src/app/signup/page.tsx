@@ -213,7 +213,7 @@ export default function SignupPage() {
                 <Link href="/" className="inline-flex items-center transition-transform duration-300 hover:-translate-y-0.5">
                   <img
                     src="/AgerisLogo.png"
-                    alt="AgerisMarket — Marketplace de Gado"
+                    alt="Ageris — Marketplace de Gado"
                     className="h-20 w-auto"
                   />
                 </Link>
@@ -228,7 +228,7 @@ export default function SignupPage() {
                 Junte-se a milhares de pecuaristas que{" "}
                 <span className="relative inline-block">
                   <span className="bg-gradient-to-r from-agre-button via-agre-brand to-agre-dark bg-clip-text text-transparent">
-                    confiam no AgerisMarket
+                    confiam no Ageris
                   </span>
                   <span aria-hidden className="absolute inset-x-0 -bottom-1 h-1 rounded-full bg-gradient-to-r from-transparent via-agre-brand/60 to-transparent blur-sm" />
                 </span>
@@ -550,7 +550,7 @@ export default function SignupPage() {
           </div>
 
           <p className="relative pb-6 text-center text-xs text-agre-muted">
-            © AgerisMarket — Marketplace de Gado
+            © Ageris — Marketplace de Gado
           </p>
         </div>
       </div>

@@ -72,7 +72,7 @@ export default function AboutPage() {
             <div className="mb-10 flex items-center justify-between gap-4 sm:mb-14">
               <img
                 src="/AgerisLogo.png"
-                alt="AgerisMarket — Marketplace de Gado"
+                alt="Ageris — Marketplace de Gado"
                 className="h-20 w-auto"
               />
               <nav className="flex items-center gap-2 sm:gap-3">
@@ -111,7 +111,7 @@ export default function AboutPage() {
               </h1>
 
               <p className="mt-6 text-base leading-relaxed text-zinc-600 lg:text-lg">
-                No AgerisMarket você anuncia, compra e vende lotes de gado com pagamento via PIX,
+                No Ageris você anuncia, compra e vende lotes de gado com pagamento via PIX,
                 segurança da plataforma e acompanhamento completo de cada transação.
               </p>
 
@@ -189,7 +189,7 @@ export default function AboutPage() {
             </section>
 
             <p className="mt-12 text-center text-xs text-agre-muted">
-              © AgerisMarket — Marketplace de Gado
+              © Ageris — Marketplace de Gado
             </p>
           </div>
         </div>

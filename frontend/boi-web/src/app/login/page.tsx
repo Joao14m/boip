@@ -107,7 +107,7 @@ export default function LoginPage() {
                 <Link href="/" className="inline-flex items-center transition-transform duration-300 hover:-translate-y-0.5">
                   <img
                     src="/AgerisLogo.png"
-                    alt="AgerisMarket — Marketplace de Gado"
+                    alt="Ageris — Marketplace de Gado"
                     className="h-20 w-auto"
                   />
                 </Link>
@@ -303,7 +303,7 @@ export default function LoginPage() {
           </div>
 
           <p className="relative pb-6 text-center text-xs text-agre-muted">
-            © AgerisMarket — Marketplace de Gado
+            © Ageris — Marketplace de Gado
           </p>
         </div>
       </div>

@@ -19,7 +19,8 @@ public class FirebaseConfig {
     @Bean
     public FirebaseApp firebaseApp(
             @Value("${boip.firebase.service-account:${FIREBASE_SERVICE_ACCOUNT:}}") Resource serviceAccount,
-            @Value("${FIREBASE_SERVICE_ACCOUNT_JSON:}") String serviceAccountJson
+            @Value("${FIREBASE_SERVICE_ACCOUNT_JSON:}") String serviceAccountJson,
+            @Value("${boip.firebase.storage-bucket:}") String storageBucket
     ) throws IOException {
 
         if (!FirebaseApp.getApps().isEmpty()) return FirebaseApp.getInstance();
@@ -35,11 +36,13 @@ public class FirebaseConfig {
             );
         }
 
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(credentialsStream))
-                .build();
+        FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(credentialsStream));
+        if (storageBucket != null && !storageBucket.isBlank()) {
+            optionsBuilder.setStorageBucket(storageBucket);
+        }
 
-        return FirebaseApp.initializeApp(options);
+        return FirebaseApp.initializeApp(optionsBuilder.build());
     }
 
     @Bean
