@@ -208,7 +208,7 @@ export default function SignupScreen() {
             <View style={styles.logoBox}>
               <Ionicons name="storefront" size={22} color="#fff" />
             </View>
-            <Text style={styles.logoText}>Agregis</Text>
+            <Text style={styles.logoText}>Ageris</Text>
           </View>
 
           <Text style={styles.welcome}>Criar conta</Text>

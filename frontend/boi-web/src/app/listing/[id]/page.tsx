@@ -13,7 +13,10 @@ import {
   Layers,
   Loader2,
   MapPin,
+  Pause,
+  Play,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -120,6 +123,8 @@ export default function ListingDetailPage() {
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [activeMediaSlot, setActiveMediaSlot] = useState<number | null>(null);
+  const [ownerActionLoading, setOwnerActionLoading] = useState<"pause" | "activate" | "delete" | null>(null);
+  const [ownerActionError, setOwnerActionError] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -164,6 +169,37 @@ export default function ListingDetailPage() {
       setPaymentError((err as Error).message || "Não foi possível iniciar o pagamento.");
     } finally {
       setPaying(false);
+    }
+  };
+
+  const handleStatusChange = async (next: "PAUSED" | "ACTIVE") => {
+    if (!listing) return;
+    try {
+      setOwnerActionLoading(next === "PAUSED" ? "pause" : "activate");
+      setOwnerActionError("");
+      const updated = await api.patch<Listing>(`/api/listings/${listing.id}/status`, { status: next });
+      setLoadState({ id: listing.id, listing: updated, error: "" });
+    } catch (err) {
+      setOwnerActionError((err as Error).message || "Não foi possível atualizar o anúncio.");
+    } finally {
+      setOwnerActionLoading(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!listing) return;
+    const ok = window.confirm(
+      "Cancelar e excluir este anúncio? Esta ação não pode ser desfeita.",
+    );
+    if (!ok) return;
+    try {
+      setOwnerActionLoading("delete");
+      setOwnerActionError("");
+      await api.delete(`/api/listings/${listing.id}`);
+      router.push("/my-lots");
+    } catch (err) {
+      setOwnerActionError((err as Error).message || "Não foi possível excluir o anúncio.");
+      setOwnerActionLoading(null);
     }
   };
 
@@ -293,6 +329,65 @@ export default function ListingDetailPage() {
               <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
                 {paymentError}
               </p>
+            )}
+
+            {isOwner && listing.status !== "SOLD" && (
+              <div className="mt-4 space-y-2 border-t border-zinc-100 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-agre-muted">
+                  Gerenciar anúncio
+                </p>
+                {listing.status === "ACTIVE" && (
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange("PAUSED")}
+                    disabled={ownerActionLoading !== null}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-300 bg-orange-50 text-sm font-bold text-orange-700 transition-colors hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {ownerActionLoading === "pause" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pause className="h-4 w-4" />
+                    )}
+                    Pausar anúncio
+                  </button>
+                )}
+                {listing.status === "PAUSED" && (
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange("ACTIVE")}
+                    disabled={ownerActionLoading !== null}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 text-sm font-bold text-green-700 transition-colors hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {ownerActionLoading === "activate" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
+                    Reativar anúncio
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={ownerActionLoading !== null}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {ownerActionLoading === "delete" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Cancelar e excluir
+                </button>
+                {ownerActionError && (
+                  <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+                    {ownerActionError}
+                  </p>
+                )}
+                <p className="text-center text-[11px] text-agre-muted">
+                  Anúncios pausados ficam visíveis apenas para você em Meus Lotes.
+                </p>
+              </div>
             )}
           </section>
 

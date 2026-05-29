@@ -54,6 +54,7 @@ public class ListingService {
     private final CattleLotProfileRepository cattleLotProfileRepository;
     private final LocationRepository locationRepository;
     private final AuditService auditService;
+    private final FirebaseStorageService firebaseStorageService;
 
     @Transactional
     public ListingResponseDto create(ListingRequestDto req, AppUser caller) {
@@ -186,13 +187,17 @@ public class ListingService {
         return result;
     }
 
+    @Transactional
     public void delete(UUID id, AppUser caller) {
         Listing entity = listingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id));
         if (!caller.getId().equals(entity.getSellerUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
         }
+        List<String> mediaKeys = listingMediaRepository.findAllByListingId(id)
+                .stream().map(ListingMedia::getMediaKey).toList();
         listingRepository.deleteById(id);
+        firebaseStorageService.deleteObjects(mediaKeys);
     }
 
     public ListingMediaResponseDto addMedia(ListingMediaRequestDto req, AppUser caller) {
@@ -232,6 +237,7 @@ public class ListingService {
         return ListingMapper.toDto(listingMediaRepository.save(entity));
     }
 
+    @Transactional
     public void removeMedia(UUID mediaId, AppUser caller) {
         ListingMedia media = listingMediaRepository.findById(mediaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found: " + mediaId));
@@ -240,7 +246,9 @@ public class ListingService {
         if (!caller.getId().equals(listing.getSellerUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your listing");
         }
+        String mediaKey = media.getMediaKey();
         listingMediaRepository.deleteById(mediaId);
+        firebaseStorageService.deleteObject(mediaKey);
     }
 
     public List<ListingMediaResponseDto> getMedia(UUID listingId) {

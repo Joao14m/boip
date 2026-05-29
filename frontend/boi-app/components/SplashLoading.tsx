@@ -156,7 +156,7 @@ export function SplashLoading() {
           </Animated.View>
         </View>
 
-        <Text style={styles.title}>Agregis</Text>
+        <Text style={styles.title}>Ageris</Text>
         <Text style={styles.subtitle}>Marketplace de Gado</Text>
 
         <View style={styles.progressTrack}>

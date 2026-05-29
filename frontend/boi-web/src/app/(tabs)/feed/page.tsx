@@ -99,7 +99,7 @@ export default function FeedPage() {
     label: string, key: string, options: string[],
     value: string, onChange: (v: string) => void, allLabel: string,
   ) => (
-    <div className="mt-3">
+    <div>
       <label className="mb-1.5 block text-xs font-semibold text-agre-muted">{label}</label>
       <button
         type="button"
@@ -322,7 +322,7 @@ export default function FeedPage() {
           {renderDropdown("Finalidade","purpose", PURPOSES, purpose, setPurpose, "Todas")}
           {renderDropdown("Estado",    "uf",      UFS,      uf,      setUf,      "Todos os estados")}
 
-          <div className="mt-3">
+          <div className="md:col-span-2 xl:col-span-2">
             <label className="mb-1.5 block text-xs font-semibold text-agre-muted">
               Preço: R$ {priceMin || "0"} - R$ {priceMax || "∞"}
             </label>
@@ -345,7 +345,7 @@ export default function FeedPage() {
             </div>
           </div>
 
-          <div className="mt-3">
+          <div className="md:col-span-2 xl:col-span-2">
             <label className="mb-1.5 block text-xs font-semibold text-agre-muted">
               Peso: {weightMin || "0"}kg - {weightMax || "∞"}kg
             </label>

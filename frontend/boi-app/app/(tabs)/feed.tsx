@@ -273,7 +273,7 @@ export default function FeedScreen() {
             <Ionicons name="storefront" size={22} color="#fff" />
           </View>
           <View style={styles.headerBrandGroup}>
-            <Text style={styles.headerBrand}>Agregis</Text>
+            <Text style={styles.headerBrand}>Ageris</Text>
             <Text style={styles.headerSub}>Compra e venda de gado</Text>
           </View>
         </View>
