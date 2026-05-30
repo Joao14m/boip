@@ -228,6 +228,7 @@ export default function ListingDetailPage() {
       <PageHeader title="Detalhes do Anúncio" onBack={() => router.back()} />
 
       <div className="mx-auto grid max-w-6xl gap-4 px-4 py-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+        <div className="space-y-4">
         <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <div className="relative h-[320px] bg-zinc-100 sm:h-[420px]">
             {activeMedia ? (
@@ -273,6 +274,36 @@ export default function ListingDetailPage() {
             </div>
           )}
         </section>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <h2 className="font-display text-sm font-extrabold text-agre-dark">Perfil do Lote</h2>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <Field label="Raça">{lot?.breed ?? "—"}</Field>
+                <Field label="Sexo">{lot?.sex ? SEX_LABEL[lot.sex] ?? lot.sex : "—"}</Field>
+                <Field label="Finalidade">{lot?.purpose ?? "—"}</Field>
+                <Field label="Estado">{lot?.uf ?? "—"}</Field>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/lot/${listing.lotId}`)}
+                className="mt-5 flex w-full items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-agre-dark hover:bg-zinc-50"
+              >
+                Ver lote completo
+                <Layers className="h-4 w-4 text-agre-muted" />
+              </button>
+            </section>
+
+            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <h2 className="font-display text-sm font-extrabold text-agre-dark">Segurança</h2>
+              <div className="mt-3 space-y-3 text-sm text-agre-muted">
+                <InfoRow icon={ShieldCheck} text="Pagamento via PIX acompanhado pela plataforma." />
+                <InfoRow icon={BadgeCheck} text="O vendedor é notificado após confirmação." />
+                <InfoRow icon={Banknote} text={`Publicado em ${formatDate(listing.publishedAt ?? listing.createdAt)}`} />
+              </div>
+            </section>
+          </div>
+        </div>
 
         <aside className="space-y-4">
           <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
@@ -390,32 +421,6 @@ export default function ListingDetailPage() {
               </div>
             )}
           </section>
-
-          <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <h2 className="font-display text-sm font-extrabold text-agre-dark">Perfil do Lote</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {lot?.breed && <Chip>{lot.breed}</Chip>}
-              {lot?.sex && <Chip>{SEX_LABEL[lot.sex] ?? lot.sex}</Chip>}
-              {lot?.purpose && <Chip>{lot.purpose}</Chip>}
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push(`/lot/${listing.lotId}`)}
-              className="mt-4 flex w-full items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-agre-dark hover:bg-zinc-50"
-            >
-              Ver lote completo
-              <Layers className="h-4 w-4 text-agre-muted" />
-            </button>
-          </section>
-
-          <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <h2 className="font-display text-sm font-extrabold text-agre-dark">Segurança</h2>
-            <div className="mt-3 space-y-3 text-sm text-agre-muted">
-              <InfoRow icon={ShieldCheck} text="Pagamento via PIX acompanhado pela plataforma." />
-              <InfoRow icon={BadgeCheck} text="O vendedor é notificado após confirmação." />
-              <InfoRow icon={Banknote} text={`Publicado em ${formatDate(listing.publishedAt ?? listing.createdAt)}`} />
-            </div>
-          </section>
         </aside>
       </div>
     </main>
@@ -440,11 +445,12 @@ function Metric({
   );
 }
 
-function Chip({ children }: { children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-agre-pale px-3 py-1 text-xs font-bold text-agre-dark">
-      {children}
-    </span>
+    <div>
+      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-agre-muted">{label}</p>
+      <p className="text-sm font-semibold text-agre-dark">{children}</p>
+    </div>
   );
 }
 
