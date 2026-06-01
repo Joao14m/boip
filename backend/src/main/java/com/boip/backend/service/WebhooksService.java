@@ -62,7 +62,7 @@ public class WebhooksService {
 
     public WebhookConfigGetResponseDto registerWebhook() {
         WebhookConfigSaveRequestDto request = WebhookConfigSaveRequestDto.builder()
-            .name("Agregis Payments")
+            .name("Ageris Payments")
             .url(webhookUrl)
             .email(webhookContactEmail)
             .enabled(true)

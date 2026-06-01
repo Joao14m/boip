@@ -13,7 +13,10 @@ import {
   Layers,
   Loader2,
   MapPin,
+  Pause,
+  Play,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -120,6 +123,8 @@ export default function ListingDetailPage() {
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [activeMediaSlot, setActiveMediaSlot] = useState<number | null>(null);
+  const [ownerActionLoading, setOwnerActionLoading] = useState<"pause" | "activate" | "delete" | null>(null);
+  const [ownerActionError, setOwnerActionError] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -167,6 +172,37 @@ export default function ListingDetailPage() {
     }
   };
 
+  const handleStatusChange = async (next: "PAUSED" | "ACTIVE") => {
+    if (!listing) return;
+    try {
+      setOwnerActionLoading(next === "PAUSED" ? "pause" : "activate");
+      setOwnerActionError("");
+      const updated = await api.patch<Listing>(`/api/listings/${listing.id}/status`, { status: next });
+      setLoadState({ id: listing.id, listing: updated, error: "" });
+    } catch (err) {
+      setOwnerActionError((err as Error).message || "Não foi possível atualizar o anúncio.");
+    } finally {
+      setOwnerActionLoading(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!listing) return;
+    const ok = window.confirm(
+      "Cancelar e excluir este anúncio? Esta ação não pode ser desfeita.",
+    );
+    if (!ok) return;
+    try {
+      setOwnerActionLoading("delete");
+      setOwnerActionError("");
+      await api.delete(`/api/listings/${listing.id}`);
+      router.push("/my-lots");
+    } catch (err) {
+      setOwnerActionError((err as Error).message || "Não foi possível excluir o anúncio.");
+      setOwnerActionLoading(null);
+    }
+  };
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F0EBDD] px-6">
@@ -192,6 +228,7 @@ export default function ListingDetailPage() {
       <PageHeader title="Detalhes do Anúncio" onBack={() => router.back()} />
 
       <div className="mx-auto grid max-w-6xl gap-4 px-4 py-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+        <div className="space-y-4">
         <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <div className="relative h-[320px] bg-zinc-100 sm:h-[420px]">
             {activeMedia ? (
@@ -237,6 +274,36 @@ export default function ListingDetailPage() {
             </div>
           )}
         </section>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <h2 className="font-display text-sm font-extrabold text-agre-dark">Perfil do Lote</h2>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <Field label="Raça">{lot?.breed ?? "—"}</Field>
+                <Field label="Sexo">{lot?.sex ? SEX_LABEL[lot.sex] ?? lot.sex : "—"}</Field>
+                <Field label="Finalidade">{lot?.purpose ?? "—"}</Field>
+                <Field label="Estado">{lot?.uf ?? "—"}</Field>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/lot/${listing.lotId}`)}
+                className="mt-5 flex w-full items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-agre-dark hover:bg-zinc-50"
+              >
+                Ver lote completo
+                <Layers className="h-4 w-4 text-agre-muted" />
+              </button>
+            </section>
+
+            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <h2 className="font-display text-sm font-extrabold text-agre-dark">Segurança</h2>
+              <div className="mt-3 space-y-3 text-sm text-agre-muted">
+                <InfoRow icon={ShieldCheck} text="Pagamento via PIX acompanhado pela plataforma." />
+                <InfoRow icon={BadgeCheck} text="O vendedor é notificado após confirmação." />
+                <InfoRow icon={Banknote} text={`Publicado em ${formatDate(listing.publishedAt ?? listing.createdAt)}`} />
+              </div>
+            </section>
+          </div>
+        </div>
 
         <aside className="space-y-4">
           <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
@@ -294,32 +361,65 @@ export default function ListingDetailPage() {
                 {paymentError}
               </p>
             )}
-          </section>
 
-          <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <h2 className="font-display text-sm font-extrabold text-agre-dark">Perfil do Lote</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {lot?.breed && <Chip>{lot.breed}</Chip>}
-              {lot?.sex && <Chip>{SEX_LABEL[lot.sex] ?? lot.sex}</Chip>}
-              {lot?.purpose && <Chip>{lot.purpose}</Chip>}
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push(`/lot/${listing.lotId}`)}
-              className="mt-4 flex w-full items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-agre-dark hover:bg-zinc-50"
-            >
-              Ver lote completo
-              <Layers className="h-4 w-4 text-agre-muted" />
-            </button>
-          </section>
-
-          <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <h2 className="font-display text-sm font-extrabold text-agre-dark">Segurança</h2>
-            <div className="mt-3 space-y-3 text-sm text-agre-muted">
-              <InfoRow icon={ShieldCheck} text="Pagamento via PIX acompanhado pela plataforma." />
-              <InfoRow icon={BadgeCheck} text="O vendedor é notificado após confirmação." />
-              <InfoRow icon={Banknote} text={`Publicado em ${formatDate(listing.publishedAt ?? listing.createdAt)}`} />
-            </div>
+            {isOwner && listing.status !== "SOLD" && (
+              <div className="mt-4 space-y-2 border-t border-zinc-100 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-agre-muted">
+                  Gerenciar anúncio
+                </p>
+                {listing.status === "ACTIVE" && (
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange("PAUSED")}
+                    disabled={ownerActionLoading !== null}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-300 bg-orange-50 text-sm font-bold text-orange-700 transition-colors hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {ownerActionLoading === "pause" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pause className="h-4 w-4" />
+                    )}
+                    Pausar anúncio
+                  </button>
+                )}
+                {listing.status === "PAUSED" && (
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange("ACTIVE")}
+                    disabled={ownerActionLoading !== null}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 text-sm font-bold text-green-700 transition-colors hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {ownerActionLoading === "activate" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
+                    Reativar anúncio
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={ownerActionLoading !== null}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {ownerActionLoading === "delete" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Cancelar e excluir
+                </button>
+                {ownerActionError && (
+                  <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+                    {ownerActionError}
+                  </p>
+                )}
+                <p className="text-center text-[11px] text-agre-muted">
+                  Anúncios pausados ficam visíveis apenas para você em Meus Lotes.
+                </p>
+              </div>
+            )}
           </section>
         </aside>
       </div>
@@ -345,11 +445,12 @@ function Metric({
   );
 }
 
-function Chip({ children }: { children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-agre-pale px-3 py-1 text-xs font-bold text-agre-dark">
-      {children}
-    </span>
+    <div>
+      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-agre-muted">{label}</p>
+      <p className="text-sm font-semibold text-agre-dark">{children}</p>
+    </div>
   );
 }
 
