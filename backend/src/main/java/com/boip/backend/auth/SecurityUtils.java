@@ -18,4 +18,13 @@ public final class SecurityUtils {
         if (auth.getPrincipal() instanceof AppUser u) return u;
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Complete signup first");
     }
+
+    // Returns the onboarded AppUser when one is authenticated, or null otherwise.
+    // Use on public endpoints (e.g. the marketplace feed) that may personalize for
+    // a signed-in caller but must still work for anonymous visitors.
+    public static AppUser currentAppUserOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof AppUser u) return u;
+        return null;
+    }
 }

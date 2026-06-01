@@ -8,6 +8,7 @@ import {
   DollarSign,
   Images,
   Loader2,
+  MapPin,
   Megaphone,
   Tag,
   X,
@@ -15,6 +16,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { uploadImage } from "@/lib/upload";
+import { getDeviceCoords } from "@/lib/location";
 import { PageHeader } from "@/components/PageHeader";
 
 const BREEDS = ["Nelore", "Angus", "Brahman", "Hereford", "Senepol", "Gir", "Guzerá", "Tabapuã"];
@@ -45,6 +47,19 @@ export default function CreateListingPage() {
   // Lot
   const [lotCode, setLotCode]     = useState("");
   const [headCount, setHeadCount] = useState("");
+
+  // Optional precise pin for the lot. When unset, the backend uses the lot's
+  // municipality center for distance sorting.
+  const [lotCoords, setLotCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating]   = useState(false);
+
+  const useMyLocation = async () => {
+    setLocating(true);
+    const coords = await getDeviceCoords();
+    setLocating(false);
+    if (coords) setLotCoords(coords);
+    else setFormError("Não foi possível obter sua localização. Verifique as permissões do navegador.");
+  };
 
   // Profile
   const [breed, setBreed]                 = useState("");
@@ -129,6 +144,8 @@ export default function CreateListingPage() {
         lotCode,
         headCount: Number(headCount),
         locationId: userLocationId,
+        latitude: lotCoords?.lat ?? null,
+        longitude: lotCoords?.lng ?? null,
       });
 
       await api.post(`/api/lots/${lot.id}/profile`, {
@@ -224,6 +241,24 @@ export default function CreateListingPage() {
               placeholder="Ex: 50"
               className={inputClass(Boolean(errors.headCount))}
             />
+          </Field>
+
+          <Field label="Localização do lote">
+            <button
+              type="button"
+              onClick={useMyLocation}
+              disabled={locating}
+              className={[
+                "flex w-full items-center gap-2 rounded-xl border bg-white px-3.5 py-2.5 text-sm transition-colors disabled:opacity-60",
+                lotCoords ? "border-agre-button text-agre-dark" : "border-zinc-200 text-zinc-500",
+              ].join(" ")}
+            >
+              <MapPin className={["h-4 w-4", lotCoords ? "text-agre-button" : "text-zinc-400"].join(" ")} />
+              {locating ? "Obtendo localização..." : lotCoords ? "Localização atual definida" : "Usar minha localização atual"}
+            </button>
+            <p className="mt-1.5 text-[11px] text-agre-muted">
+              Opcional. Sem isso, usamos o município do seu perfil para ordenar por proximidade.
+            </p>
           </Field>
         </Section>
 

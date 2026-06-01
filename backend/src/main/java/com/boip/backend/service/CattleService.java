@@ -51,6 +51,8 @@ public class CattleService {
                 .lotCode(lotCode)
                 .headCount(req.getHeadCount())
                 .locationId(req.getLocationId())
+                .latitude(req.getLatitude())
+                .longitude(req.getLongitude())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -94,6 +96,8 @@ public class CattleService {
         if (req.getLotCode() != null) existing.setLotCode(req.getLotCode().trim());
         if (req.getHeadCount() != null) existing.setHeadCount(req.getHeadCount());
         if (req.getLocationId() != null) existing.setLocationId(req.getLocationId());
+        if (req.getLatitude() != null) existing.setLatitude(req.getLatitude());
+        if (req.getLongitude() != null) existing.setLongitude(req.getLongitude());
 
         CattleLot saved = cattleRepository.save(existing);
 

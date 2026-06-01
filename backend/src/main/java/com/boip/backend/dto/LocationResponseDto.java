@@ -1,5 +1,6 @@
 package com.boip.backend.dto;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -14,5 +15,7 @@ public class LocationResponseDto {
     String municipality;
     String uf;
     String ibgeCode;
+    BigDecimal latitude;
+    BigDecimal longitude;
     OffsetDateTime createdAt;
 }
