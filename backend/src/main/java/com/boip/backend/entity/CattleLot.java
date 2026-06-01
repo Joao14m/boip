@@ -1,5 +1,6 @@
 package com.boip.backend.entity;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -41,6 +42,13 @@ public class CattleLot {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", insertable = false, updatable = false)
     private Location location;
+
+    // Optional precise map pin; when null the lot's municipality center is used.
+    @Column(name = "latitude")
+    private BigDecimal latitude;
+
+    @Column(name = "longitude")
+    private BigDecimal longitude;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -1,5 +1,6 @@
 package com.boip.backend.entity;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -36,6 +37,12 @@ public class Location {
 
     @Column(name = "ibge_code", nullable = false, length = 7, unique = true)
     private String ibgeCode;
+
+    @Column(name = "latitude")
+    private BigDecimal latitude;
+
+    @Column(name = "longitude")
+    private BigDecimal longitude;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

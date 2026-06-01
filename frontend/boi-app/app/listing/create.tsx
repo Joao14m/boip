@@ -19,6 +19,7 @@ import { AgreGreen } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { uploadImage } from '@/lib/upload';
+import { getDeviceCoords } from '@/lib/location';
 import { FieldError } from '@/components/FieldError';
 
 const BREEDS = ['Nelore', 'Angus', 'Brahman', 'Hereford', 'Senepol', 'Gir', 'Guzerá', 'Tabapuã'];
@@ -47,6 +48,19 @@ export default function CreateListingScreen() {
   // Lot fields
   const [lotCode, setLotCode] = useState('');
   const [headCount, setHeadCount] = useState('');
+
+  // Optional precise pin for the lot. When unset, the backend uses the lot's
+  // municipality center for distance sorting.
+  const [lotCoords, setLotCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  const useMyLocation = async () => {
+    setLocating(true);
+    const coords = await getDeviceCoords();
+    setLocating(false);
+    if (coords) setLotCoords(coords);
+    else Alert.alert('Localização', 'Não foi possível obter sua localização. Verifique as permissões.');
+  };
 
   // Profile fields
   const [breed, setBreed] = useState('');
@@ -111,6 +125,8 @@ export default function CreateListingScreen() {
         lotCode,
         headCount: Number(headCount),
         locationId: userLocationId,
+        latitude: lotCoords?.lat ?? null,
+        longitude: lotCoords?.lng ?? null,
       });
 
       // 2. Create lot profile
@@ -219,6 +235,23 @@ export default function CreateListingScreen() {
             <Text style={labelStyle}>Quantidade (cabeças)</Text>
             <TextInput style={inputStyle} placeholder="Ex: 50" placeholderTextColor={AgreGreen.placeholder} value={headCount} onChangeText={v => { setHeadCount(v); clearError('headCount'); }} keyboardType="numeric" />
             <FieldError message={errors.headCount} />
+          </View>
+
+          <View style={{ marginBottom: 16 }}>
+            <Text style={labelStyle}>Localização do lote</Text>
+            <Pressable
+              onPress={useMyLocation}
+              disabled={locating}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: AgreGreen.inputBg, borderWidth: 1, borderColor: lotCoords ? AgreGreen.button : AgreGreen.inputBorder, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12 }}
+            >
+              <Ionicons name={lotCoords ? 'location' : 'location-outline'} size={18} color={lotCoords ? AgreGreen.button : AgreGreen.muted} />
+              <Text style={{ color: lotCoords ? AgreGreen.dark : AgreGreen.muted, fontSize: 14 }}>
+                {locating ? 'Obtendo localização...' : lotCoords ? 'Localização atual definida' : 'Usar minha localização atual'}
+              </Text>
+            </Pressable>
+            <Text style={{ color: AgreGreen.muted, fontSize: 11, marginTop: 6 }}>
+              Opcional. Sem isso, usamos o município do seu perfil para ordenar por proximidade.
+            </Text>
           </View>
 
           {/* ── Perfil ── */}

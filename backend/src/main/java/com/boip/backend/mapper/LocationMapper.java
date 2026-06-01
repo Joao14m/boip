@@ -13,6 +13,8 @@ public final class LocationMapper {
                 .municipality(entity.getMunicipality())
                 .uf(entity.getUf())
                 .ibgeCode(entity.getIbgeCode())
+                .latitude(entity.getLatitude())
+                .longitude(entity.getLongitude())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }

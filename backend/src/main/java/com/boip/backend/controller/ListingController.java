@@ -15,6 +15,7 @@ import com.boip.backend.dto.PageResponseDto;
 import com.boip.backend.dto.StatusUpdateRequestDto;
 import com.boip.backend.service.ListingService;
 
+import static com.boip.backend.auth.SecurityUtils.currentAppUserOrNull;
 import static com.boip.backend.auth.SecurityUtils.requireAppUser;
 
 import jakarta.validation.Valid;
@@ -48,12 +49,14 @@ public class ListingController {
             @RequestParam(required = false) UUID sellerUserId,
             @RequestParam(required = false) UUID lotId,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
         if (sellerUserId != null) return listingService.findBySeller(sellerUserId, page, size);
         if (lotId != null) return listingService.findByLot(lotId, page, size);
         String effectiveStatus = (status != null && !status.isBlank()) ? status.toUpperCase() : "ACTIVE";
-        return listingService.findByStatus(effectiveStatus, page, size);
+        return listingService.findByStatus(effectiveStatus, lat, lng, currentAppUserOrNull(), page, size);
     }
 
     @PatchMapping("/{id}")

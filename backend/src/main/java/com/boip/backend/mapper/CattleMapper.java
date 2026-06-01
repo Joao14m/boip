@@ -20,6 +20,8 @@ public final class CattleMapper {
                 .lotCode(entity.getLotCode())
                 .headCount(entity.getHeadCount())
                 .locationId(entity.getLocationId())
+                .latitude(entity.getLatitude())
+                .longitude(entity.getLongitude())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .currentProfile(currentProfile)
