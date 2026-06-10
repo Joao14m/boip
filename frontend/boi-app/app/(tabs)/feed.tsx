@@ -15,6 +15,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/feed/feed.styles';
 import { api } from '@/lib/api';
+import { getDeviceCoords } from '@/lib/location';
 
 /* ── Known dropdown values ── */
 const BREEDS = ['Nelore', 'Angus', 'Brahman', 'Hereford', 'Senepol', 'Gir', 'Guzerá', 'Tabapuã'];
@@ -52,11 +53,22 @@ export default function FeedScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      let cancelled = false;
       setLoading(true);
-      api.get<{ content: any[] }>('/api/listings?status=ACTIVE&size=50')
-        .then((data) => setListings(data.content ?? []))
+      // Sort the feed by proximity to the device location. When coords are
+      // unavailable the backend falls back to the user's home municipality.
+      getDeviceCoords()
+        .then((coords) => {
+          if (cancelled) return null;
+          const proximity = coords ? `&lat=${coords.lat}&lng=${coords.lng}` : '';
+          return api.get<{ content: any[] }>(`/api/listings?status=ACTIVE&size=50${proximity}`);
+        })
+        .then((data) => {
+          if (!cancelled && data) setListings(data.content ?? []);
+        })
         .catch(console.error)
-        .finally(() => setLoading(false));
+        .finally(() => { if (!cancelled) setLoading(false); });
+      return () => { cancelled = true; };
     }, [])
   );
 

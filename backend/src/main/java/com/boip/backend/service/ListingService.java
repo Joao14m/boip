@@ -139,13 +139,37 @@ public class ListingService {
         return toDtoPage(listingRepository.findAllByLotId(lotId, pageable));
     }
 
-    public PageResponseDto<ListingResponseDto> findByStatus(String status, int page, int size) {
+    public PageResponseDto<ListingResponseDto> findByStatus(
+            String status, Double lat, Double lng, AppUser caller, int page, int size) {
         if (!VALID_STATUSES.contains(status)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Invalid status. Must be one of: " + VALID_STATUSES);
         }
+
+        // Resolve the buyer's origin: device GPS first, then their home-municipality
+        // center. If neither is available, fall back to newest-first ordering.
+        double[] origin = resolveOrigin(lat, lng, caller);
+        if (origin != null) {
+            var pageable = PageRequest.of(page, size);
+            return toDtoPage(listingRepository.findActiveNearby(status, origin[0], origin[1], pageable));
+        }
+
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return toDtoPage(listingRepository.findAllByStatus(status, pageable));
+    }
+
+    // Returns [lat, lng] for the feed anchor, or null when no origin can be determined.
+    private double[] resolveOrigin(Double lat, Double lng, AppUser caller) {
+        if (lat != null && lng != null) {
+            return new double[] { lat, lng };
+        }
+        if (caller != null && caller.getLocationId() != null) {
+            Location home = locationRepository.findById(caller.getLocationId()).orElse(null);
+            if (home != null && home.getLatitude() != null && home.getLongitude() != null) {
+                return new double[] { home.getLatitude().doubleValue(), home.getLongitude().doubleValue() };
+            }
+        }
+        return null;
     }
 
     @Transactional

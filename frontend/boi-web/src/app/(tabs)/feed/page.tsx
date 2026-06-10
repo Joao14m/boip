@@ -7,6 +7,7 @@ import {
   Heart, Image as ImageIcon, Images, Dumbbell, Calendar, MapPin,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { getDeviceCoords } from "@/lib/location";
 
 const BREEDS   = ["Nelore", "Angus", "Brahman", "Hereford", "Senepol", "Gir", "Guzerá", "Tabapuã"];
 const PURPOSES = ["Corte", "Leite", "Reprodução", "Misto"];
@@ -57,9 +58,20 @@ export default function FeedPage() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<{ content: Listing[] }>("/api/listings?status=ACTIVE&size=50")
-      .then((data) => setListings(data.content ?? []))
-      .catch(() => setListings([]));
+    let cancelled = false;
+    // Sort the feed by proximity to the browser location. When coords are
+    // unavailable the backend falls back to the user's home municipality.
+    getDeviceCoords()
+      .then((coords) => {
+        if (cancelled) return null;
+        const proximity = coords ? `&lat=${coords.lat}&lng=${coords.lng}` : "";
+        return api.get<{ content: Listing[] }>(`/api/listings?status=ACTIVE&size=50${proximity}`);
+      })
+      .then((data) => {
+        if (!cancelled && data) setListings(data.content ?? []);
+      })
+      .catch(() => { if (!cancelled) setListings([]); });
+    return () => { cancelled = true; };
   }, []);
 
   const activeFilterCount = useMemo(() => {
