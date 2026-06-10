@@ -101,7 +101,18 @@ export default function CreateListingPage() {
     const e: Record<string, string> = {};
     if (!lotCode.trim())                            e.lotCode     = "Código do lote é obrigatório.";
     if (!headCount || Number(headCount) < 1)        e.headCount   = "Quantidade deve ser pelo menos 1.";
-    if (!priceAmount || Number(priceAmount) <= 0)   e.priceAmount = "Informe um valor válido.";
+
+    // Perfil do Lote — everything except the description is required.
+    if (!breed)                                     e.breed       = "Selecione a raça.";
+    if (!sex)                                       e.sex         = "Selecione o sexo.";
+    if (!purpose)                                   e.purpose     = "Selecione a finalidade.";
+    if (!avgWeightKg || Number(avgWeightKg) <= 0)
+      e.avgWeightKg = Number(avgWeightKg) < 0 ? "O peso não pode ser negativo." : "Informe um peso válido.";
+    if (!avgAgeMonths || Number(avgAgeMonths) < 0)
+      e.avgAgeMonths = Number(avgAgeMonths) < 0 ? "A idade não pode ser negativa." : "Informe a idade média (meses).";
+
+    if (!priceAmount || Number(priceAmount) <= 0)
+      e.priceAmount = Number(priceAmount) < 0 ? "O valor não pode ser negativo." : "Informe um valor válido.";
     if (images.length === 0)                        e.images      = "Adicione pelo menos uma foto.";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -267,33 +278,33 @@ export default function CreateListingPage() {
           title="Perfil do Lote"
           subtitle="Características que ajudam o comprador a avaliar."
         >
-          <Field label="Raça">
+          <Field label="Raça" error={errors.breed}>
             <div className="flex flex-wrap gap-2">
               {BREEDS.map((b) => (
-                <Chip key={b} active={breed === b} onClick={() => setBreed(breed === b ? "" : b)}>
+                <Chip key={b} active={breed === b} onClick={() => { setBreed(breed === b ? "" : b); clearError("breed"); }}>
                   {b}
                 </Chip>
               ))}
             </div>
           </Field>
 
-          <Field label="Sexo">
+          <Field label="Sexo" error={errors.sex}>
             <div className="flex flex-wrap gap-2">
               {SEXES.map((s) => (
-                <Chip key={s.value} active={sex === s.value} onClick={() => setSex(sex === s.value ? "" : s.value)}>
+                <Chip key={s.value} active={sex === s.value} onClick={() => { setSex(sex === s.value ? "" : s.value); clearError("sex"); }}>
                   {s.label}
                 </Chip>
               ))}
             </div>
           </Field>
 
-          <Field label="Finalidade">
+          <Field label="Finalidade" error={errors.purpose}>
             <div className="flex flex-wrap gap-2">
               {PURPOSES.map((p) => (
                 <Chip
                   key={p.value}
                   active={purpose === p.value}
-                  onClick={() => setPurpose(purpose === p.value ? "" : p.value)}
+                  onClick={() => { setPurpose(purpose === p.value ? "" : p.value); clearError("purpose"); }}
                 >
                   {p.label}
                 </Chip>
@@ -302,25 +313,27 @@ export default function CreateListingPage() {
           </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Peso médio (kg)">
+            <Field label="Peso médio (kg)" error={errors.avgWeightKg}>
               <input
                 type="number"
                 inputMode="numeric"
+                min={0}
                 value={avgWeightKg}
-                onChange={(e) => setAvgWeightKg(e.target.value)}
+                onChange={(e) => { setAvgWeightKg(e.target.value); clearError("avgWeightKg"); }}
                 placeholder="Ex: 450"
-                className={inputClass(false)}
+                className={inputClass(Boolean(errors.avgWeightKg))}
               />
             </Field>
 
-            <Field label="Idade média (meses)">
+            <Field label="Idade média (meses)" error={errors.avgAgeMonths}>
               <input
                 type="number"
                 inputMode="numeric"
+                min={0}
                 value={avgAgeMonths}
-                onChange={(e) => setAvgAgeMonths(e.target.value)}
+                onChange={(e) => { setAvgAgeMonths(e.target.value); clearError("avgAgeMonths"); }}
                 placeholder="Ex: 24"
-                className={inputClass(false)}
+                className={inputClass(Boolean(errors.avgAgeMonths))}
               />
             </Field>
           </div>
@@ -414,6 +427,7 @@ export default function CreateListingPage() {
             <input
               type="number"
               inputMode="numeric"
+              min={0}
               value={priceAmount}
               onChange={(e) => { setPriceAmount(e.target.value); clearError("priceAmount"); }}
               placeholder="Ex: 150000"

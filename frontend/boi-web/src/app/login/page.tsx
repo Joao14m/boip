@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { Mail, Lock, Eye, EyeOff, Check } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Check, ArrowLeft } from "lucide-react";
 import { auth } from "@/lib/firebase";
 
 const FIREBASE_ERRORS: Record<string, string> = {
@@ -161,6 +161,13 @@ export default function LoginPage() {
                   noValidate
                 >
                   <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
+
+                  <Link
+                    href="/"
+                    className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-agre-muted transition-colors hover:text-agre-dark"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Voltar ao início
+                  </Link>
 
                   <h3 className="font-display text-2xl font-extrabold tracking-tight text-zinc-900">
                     Bem-vindo de volta
