@@ -20,7 +20,7 @@ export function TabBar() {
           <Link href="/" className="flex items-center">
             <img
               src="/AgerisLogo.png"
-              alt="Ageris — Marketplace de Gado"
+              alt="Ageris - Marketplace de Gado"
               className="h-20 w-auto"
             />
           </Link>

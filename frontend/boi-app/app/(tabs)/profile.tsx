@@ -346,13 +346,16 @@ export default function ProfileScreen() {
                         />
                       </View>
                       <View style={[styles.infoField, styles.infoHalf]}>
-                        <Text style={styles.infoLabel}>{editForm.docType}</Text>
-                        <TextInput
-                          style={[styles.infoValue, { borderBottomWidth: 1, borderColor: AgreGreen.inputBorder, paddingVertical: 4 }]}
-                          value={editForm.personDoc}
-                          onChangeText={(v) => setEditForm(f => ({ ...f, personDoc: v }))}
-                          keyboardType="numeric"
-                        />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={styles.infoLabel}>{user.docType ?? 'Documento'}</Text>
+                          <Ionicons name="lock-closed" size={12} color={AgreGreen.muted} />
+                        </View>
+                        <Text style={[styles.infoValue, { color: AgreGreen.muted, paddingVertical: 4 }]}>
+                          {user.personDoc ? formatDoc(user.personDoc, user.docType) : '—'}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: AgreGreen.muted, marginTop: 2 }}>
+                          Documento não pode ser alterado aqui.
+                        </Text>
                       </View>
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
@@ -444,8 +447,8 @@ export default function ProfileScreen() {
                   </View>
                 </View>
                 <Pressable
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}
-                  onPress={() => router.push('/payout-info')}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4, opacity: 0.6 }}
+                  onPress={() => Alert.alert('Dados bancários', 'Não é possível fazer isso por agora.')}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Ionicons name="card-outline" size={18} color={AgreGreen.brand} />

@@ -88,7 +88,18 @@ export default function CreateListingScreen() {
     const e: Record<string, string> = {};
     if (!lotCode.trim())                    e.lotCode    = 'Código do lote é obrigatório.';
     if (!headCount || Number(headCount) < 1) e.headCount  = 'Quantidade deve ser pelo menos 1.';
-    if (!priceAmount || Number(priceAmount) <= 0) e.priceAmount = 'Informe um valor válido.';
+
+    // Perfil do Lote — everything except the description is required.
+    if (!breed)                             e.breed       = 'Selecione a raça.';
+    if (!sex)                               e.sex         = 'Selecione o sexo.';
+    if (!purpose)                           e.purpose     = 'Selecione a finalidade.';
+    if (!avgWeightKg || Number(avgWeightKg) <= 0)
+      e.avgWeightKg = Number(avgWeightKg) < 0 ? 'O peso não pode ser negativo.' : 'Informe um peso válido.';
+    if (!avgAgeMonths || Number(avgAgeMonths) < 0)
+      e.avgAgeMonths = Number(avgAgeMonths) < 0 ? 'A idade não pode ser negativa.' : 'Informe a idade média (meses).';
+
+    if (!priceAmount || Number(priceAmount) <= 0)
+      e.priceAmount = Number(priceAmount) < 0 ? 'O valor não pode ser negativo.' : 'Informe um valor válido.';
     if (images.length === 0)               e.images     = 'Adicione pelo menos uma foto.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -264,44 +275,49 @@ export default function CreateListingScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {BREEDS.map(b => (
-                  <Pressable key={b} style={chipStyle(breed === b)} onPress={() => setBreed(breed === b ? '' : b)}>
+                  <Pressable key={b} style={chipStyle(breed === b)} onPress={() => { setBreed(breed === b ? '' : b); clearError('breed'); }}>
                     <Text style={chipText(breed === b)}>{b}</Text>
                   </Pressable>
                 ))}
               </View>
             </ScrollView>
+            <FieldError message={errors.breed} />
           </View>
 
           <View style={{ marginBottom: 16 }}>
             <Text style={labelStyle}>Sexo</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {SEXES.map(s => (
-                <Pressable key={s.value} style={chipStyle(sex === s.value)} onPress={() => setSex(sex === s.value ? '' : s.value)}>
+                <Pressable key={s.value} style={chipStyle(sex === s.value)} onPress={() => { setSex(sex === s.value ? '' : s.value); clearError('sex'); }}>
                   <Text style={chipText(sex === s.value)}>{s.label}</Text>
                 </Pressable>
               ))}
             </View>
+            <FieldError message={errors.sex} />
           </View>
 
           <View style={{ marginBottom: 16 }}>
             <Text style={labelStyle}>Finalidade</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {PURPOSES.map(p => (
-                <Pressable key={p.value} style={chipStyle(purpose === p.value)} onPress={() => setPurpose(purpose === p.value ? '' : p.value)}>
+                <Pressable key={p.value} style={chipStyle(purpose === p.value)} onPress={() => { setPurpose(purpose === p.value ? '' : p.value); clearError('purpose'); }}>
                   <Text style={chipText(purpose === p.value)}>{p.label}</Text>
                 </Pressable>
               ))}
             </View>
+            <FieldError message={errors.purpose} />
           </View>
 
           <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
             <View style={{ flex: 1 }}>
               <Text style={labelStyle}>Peso médio (kg)</Text>
-              <TextInput style={inputStyle} placeholder="Ex: 450" placeholderTextColor={AgreGreen.placeholder} value={avgWeightKg} onChangeText={setAvgWeightKg} keyboardType="numeric" />
+              <TextInput style={inputStyle} placeholder="Ex: 450" placeholderTextColor={AgreGreen.placeholder} value={avgWeightKg} onChangeText={v => { setAvgWeightKg(v); clearError('avgWeightKg'); }} keyboardType="numeric" />
+              <FieldError message={errors.avgWeightKg} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={labelStyle}>Idade média (meses)</Text>
-              <TextInput style={inputStyle} placeholder="Ex: 24" placeholderTextColor={AgreGreen.placeholder} value={avgAgeMonths} onChangeText={setAvgAgeMonths} keyboardType="numeric" />
+              <TextInput style={inputStyle} placeholder="Ex: 24" placeholderTextColor={AgreGreen.placeholder} value={avgAgeMonths} onChangeText={v => { setAvgAgeMonths(v); clearError('avgAgeMonths'); }} keyboardType="numeric" />
+              <FieldError message={errors.avgAgeMonths} />
             </View>
           </View>
 

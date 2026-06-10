@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Store, Filter, Search, X, ChevronDown, ChevronUp,
-  Heart, Image as ImageIcon, Images, Dumbbell, Calendar, MapPin,
+  Plus, Image as ImageIcon, Images, Dumbbell, Calendar, MapPin,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getDeviceCoords } from "@/lib/location";
@@ -43,7 +43,6 @@ export default function FeedPage() {
   const router = useRouter();
 
   const [listings, setListings] = useState<Listing[] | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "favorites">("all");
 
   const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch]       = useState("");
@@ -79,6 +78,10 @@ export default function FeedPage() {
       .filter(Boolean).length;
   }, [search, breed, purpose, uf, priceMin, priceMax, weightMin, weightMax]);
 
+  // Money and weight can never be negative.
+  const priceError  = (priceMin !== "" && Number(priceMin) < 0) || (priceMax !== "" && Number(priceMax) < 0);
+  const weightError = (weightMin !== "" && Number(weightMin) < 0) || (weightMax !== "" && Number(weightMax) < 0);
+
   const filtered = useMemo(() => {
     return (listings ?? []).filter((item) => {
       const lot = item.lotSummary;
@@ -111,7 +114,7 @@ export default function FeedPage() {
     label: string, key: string, options: string[],
     value: string, onChange: (v: string) => void, allLabel: string,
   ) => (
-    <div>
+    <div className="relative">
       <label className="mb-1.5 block text-xs font-semibold text-agre-muted">{label}</label>
       <button
         type="button"
@@ -124,7 +127,7 @@ export default function FeedPage() {
           : <ChevronDown className="h-4 w-4 text-zinc-400" />}
       </button>
       {openDropdown === key && (
-        <div className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-md">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg">
           <button
             type="button"
             onClick={() => { onChange(""); setOpenDropdown(null); }}
@@ -171,13 +174,6 @@ export default function FeedPage() {
               {lot.purpose}
             </span>
           )}
-
-          <button
-            type="button"
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow hover:bg-white"
-          >
-            <Heart className="h-[18px] w-[18px] text-zinc-500" />
-          </button>
 
           {photoCount > 1 && (
             <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
@@ -271,6 +267,15 @@ export default function FeedPage() {
             <p className="text-xs text-zinc-600 sm:text-sm">Compra e venda de gado com filtros por lote, preço e perfil.</p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => router.push("/listing/create")}
+          className="group relative flex h-11 flex-shrink-0 items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-agre-dark via-agre-dark to-[#2A1B0F] px-4 text-sm font-bold text-white shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-agre-brand/30"
+        >
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-all duration-700 group-hover:left-[120%]" />
+          <Plus className="h-[18px] w-[18px]" />
+          Criar Anúncio
+        </button>
       </header>
 
       <section className="rounded-3xl border border-white/60 bg-white/85 px-4 py-3 shadow-xl shadow-agre-brand/10 ring-1 ring-zinc-200/60 backdrop-blur-sm">
@@ -341,20 +346,23 @@ export default function FeedPage() {
             <div className="flex items-center gap-2">
               <input
                 type="number"
+                min={0}
                 placeholder="Min"
                 value={priceMin}
                 onChange={(e) => setPriceMin(e.target.value)}
-                className="h-10 flex-1 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none"
+                className={`h-10 flex-1 rounded-lg border bg-white px-3 text-sm focus:outline-none ${priceError ? "border-red-400" : "border-zinc-200"}`}
               />
               <span className="text-zinc-400">—</span>
               <input
                 type="number"
+                min={0}
                 placeholder="Max"
                 value={priceMax}
                 onChange={(e) => setPriceMax(e.target.value)}
-                className="h-10 flex-1 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none"
+                className={`h-10 flex-1 rounded-lg border bg-white px-3 text-sm focus:outline-none ${priceError ? "border-red-400" : "border-zinc-200"}`}
               />
             </div>
+            {priceError && <p className="mt-1.5 text-xs font-semibold text-red-500">O preço não pode ser negativo.</p>}
           </div>
 
           <div className="md:col-span-2 xl:col-span-2">
@@ -364,66 +372,41 @@ export default function FeedPage() {
             <div className="flex items-center gap-2">
               <input
                 type="number"
+                min={0}
                 placeholder="Min (kg)"
                 value={weightMin}
                 onChange={(e) => setWeightMin(e.target.value)}
-                className="h-10 flex-1 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none"
+                className={`h-10 flex-1 rounded-lg border bg-white px-3 text-sm focus:outline-none ${weightError ? "border-red-400" : "border-zinc-200"}`}
               />
               <span className="text-zinc-400">—</span>
               <input
                 type="number"
+                min={0}
                 placeholder="Max (kg)"
                 value={weightMax}
                 onChange={(e) => setWeightMax(e.target.value)}
-                className="h-10 flex-1 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none"
+                className={`h-10 flex-1 rounded-lg border bg-white px-3 text-sm focus:outline-none ${weightError ? "border-red-400" : "border-zinc-200"}`}
               />
             </div>
+            {weightError && <p className="mt-1.5 text-xs font-semibold text-red-500">O peso não pode ser negativo.</p>}
           </div>
-
-          {activeFilterCount > 0 && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="h-10 self-end rounded-xl border border-zinc-200 bg-white/90 px-4 text-sm font-semibold text-agre-dark hover:bg-white"
-            >
-              Limpar filtros
-            </button>
-          )}
         </div>
       )}
       </section>
 
-      <div className="mt-4 flex w-full rounded-xl border border-zinc-200/70 bg-white/80 p-1 shadow-sm shadow-black/5 sm:w-fit">
-        <button
-          type="button"
-          onClick={() => setActiveTab("all")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold sm:flex-none ${
-            activeTab === "all" ? "bg-gradient-to-br from-agre-brand to-agre-button text-white shadow-md shadow-agre-brand/30" : "text-zinc-500 hover:text-agre-dark"
-          }`}
-        >
-          Todos os Anúncios ({filtered.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("favorites")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold sm:flex-none ${
-            activeTab === "favorites" ? "bg-gradient-to-br from-agre-brand to-agre-button text-white shadow-md shadow-agre-brand/30" : "text-zinc-500 hover:text-agre-dark"
-          }`}
-        >
-          <Heart className="h-3.5 w-3.5" />
-          Favoritos (0)
-        </button>
+      <div className="mt-4 flex items-center gap-2">
+        <h2 className="font-display text-base font-extrabold text-agre-dark">
+          Todos os Anúncios
+        </h2>
+        <span className="rounded-full bg-agre-pale px-2 py-0.5 text-xs font-bold text-agre-dark">
+          {filtered.length}
+        </span>
       </div>
 
       <div className="mt-4 flex-1">
         {listings === null ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-agre-brand border-t-transparent" />
-          </div>
-        ) : activeTab === "favorites" ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-2 px-6 text-center">
-            <Heart className="h-12 w-12 text-zinc-300" />
-            <p className="text-sm text-agre-muted">Nenhum favorito ainda.</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-2 px-6 text-center">
