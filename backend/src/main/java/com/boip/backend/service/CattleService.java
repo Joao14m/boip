@@ -163,7 +163,7 @@ public class CattleService {
                 .profileVersion(nextVersion)
                 .breed(req.getBreed())
                 .sex(req.getSex() != null ? req.getSex().toUpperCase() : null)
-                .purpose(req.getPurpose() != null ? req.getPurpose().toUpperCase() : null)
+                .purpose(req.getPurpose())
                 .avgWeightKg(req.getAvgWeightKg())
                 .avgAgeMonths(req.getAvgAgeMonths())
                 .birthYear(req.getBirthYear())

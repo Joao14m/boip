@@ -98,6 +98,7 @@ export default function ProfilePage() {
     items: [],
   });
   const [editing, setEditing] = useState(false);
+  const [payoutBlocked, setPayoutBlocked] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: "", lastName: "", phone: "", personDoc: "", docType: "CPF",
   });
@@ -375,12 +376,11 @@ export default function ProfilePage() {
                             className="w-full border-b border-agre-input-border py-1 text-sm focus:border-agre-button focus:outline-none"
                           />
                         </Field>
-                        <Field label={editForm.docType}>
-                          <input
-                            value={editForm.personDoc}
-                            onChange={(e) => setEditForm((f) => ({ ...f, personDoc: e.target.value }))}
-                            className="w-full border-b border-agre-input-border py-1 text-sm focus:border-agre-button focus:outline-none"
-                          />
+                        <Field label={<span className="inline-flex items-center gap-1">{profile.docType ?? "Documento"} <Lock className="h-3 w-3 text-agre-muted" /></span>}>
+                          <p className="py-1 text-sm text-agre-muted">
+                            {profile.personDoc ? formatDoc(profile.personDoc, profile.docType) : "—"}
+                          </p>
+                          <p className="text-[11px] text-agre-muted">Documento não pode ser alterado aqui.</p>
                         </Field>
                       </div>
                       <div className="flex gap-2 pt-3">
@@ -446,8 +446,9 @@ export default function ProfilePage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => router.push("/payout-info")}
-                    className="flex w-full items-center justify-between py-1"
+                    onClick={() => setPayoutBlocked(true)}
+                    aria-disabled
+                    className="flex w-full cursor-not-allowed items-center justify-between py-1 opacity-60"
                   >
                     <span className="flex items-center gap-2 text-sm text-zinc-900">
                       <CreditCard className="h-[18px] w-[18px] text-agre-brand" />
@@ -455,6 +456,11 @@ export default function ProfilePage() {
                     </span>
                     <ChevronRight className="h-4 w-4 text-zinc-400" />
                   </button>
+                  {payoutBlocked && (
+                    <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+                      Não é possível fazer isso por agora.
+                    </p>
+                  )}
                 </section>
 
                 <section className="rounded-3xl border border-white/60 bg-white/90 p-5 shadow-lg shadow-black/5 ring-1 ring-zinc-200/60">

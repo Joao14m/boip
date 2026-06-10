@@ -35,7 +35,6 @@ function formatPrice(amount: number, currency: string) {
 export default function FeedScreen() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
 
   /* ── filter state ── */
   const [showFilters, setShowFilters] = useState(false);
@@ -84,6 +83,12 @@ export default function FeedScreen() {
     if (weightMax) count++;
     return count;
   }, [search, breed, purpose, uf, priceMin, priceMax, weightMin, weightMax]);
+
+  // Money and weight can never be negative.
+  const priceError =
+    (priceMin !== '' && Number(priceMin) < 0) || (priceMax !== '' && Number(priceMax) < 0);
+  const weightError =
+    (weightMin !== '' && Number(weightMin) < 0) || (weightMax !== '' && Number(weightMax) < 0);
 
   const filtered = useMemo(() => {
     return listings.filter((item) => {
@@ -193,10 +198,6 @@ export default function FeedScreen() {
               <Text style={styles.purposeBadgeText}>{lot.purpose}</Text>
             </View>
           )}
-
-          <Pressable style={styles.heartBtn}>
-            <Ionicons name="heart-outline" size={18} color="#888" />
-          </Pressable>
 
           {/* Dots indicator */}
           {photoCount > 1 && (
@@ -383,6 +384,11 @@ export default function FeedScreen() {
                 keyboardType="numeric"
               />
             </View>
+            {priceError && (
+              <Text style={{ color: '#E53E3E', fontSize: 12, marginTop: 6 }}>
+                O preço não pode ser negativo.
+              </Text>
+            )}
           </View>
 
           <View style={styles.filterField}>
@@ -408,50 +414,27 @@ export default function FeedScreen() {
                 keyboardType="numeric"
               />
             </View>
+            {weightError && (
+              <Text style={{ color: '#E53E3E', fontSize: 12, marginTop: 6 }}>
+                O peso não pode ser negativo.
+              </Text>
+            )}
           </View>
-
-          {activeFilterCount > 0 && (
-            <Pressable style={styles.clearFiltersBtn} onPress={clearFilters}>
-              <Text style={styles.clearFiltersText}>Limpar filtros</Text>
-            </Pressable>
-          )}
         </ScrollView>
       )}
 
-      {/* ── Tabs ── */}
-      <View style={styles.tabBar}>
-        <Pressable
-          style={[styles.tab, activeTab === 'all' && styles.tabActive]}
-          onPress={() => setActiveTab('all')}
-        >
-          <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
-            Todos os Anúncios ({filtered.length})
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === 'favorites' && styles.tabActive]}
-          onPress={() => setActiveTab('favorites')}
-        >
-          <Ionicons
-            name="heart-outline"
-            size={14}
-            color={activeTab === 'favorites' ? AgreGreen.dark : '#888'}
-          />
-          <Text style={[styles.tabText, activeTab === 'favorites' && styles.tabTextActive]}>
-            Favoritos (0)
-          </Text>
-        </Pressable>
+      {/* ── Results header ── */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 14 }}>
+        <Text style={{ fontSize: 15, fontWeight: '700', color: '#1B2D24' }}>Todos os Anúncios</Text>
+        <View style={styles.activeFilterCount}>
+          <Text style={styles.activeFilterCountText}>{filtered.length}</Text>
+        </View>
       </View>
 
       {/* ── Results ── */}
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={AgreGreen.brand} />
-        </View>
-      ) : activeTab === 'favorites' ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="heart-outline" size={48} color="#CCC" />
-          <Text style={styles.emptyText}>Nenhum favorito ainda.</Text>
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.emptyContainer}>
