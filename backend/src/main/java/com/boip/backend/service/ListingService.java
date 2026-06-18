@@ -80,6 +80,7 @@ public class ListingService {
             if (m.getMediaSlot() < 3 && !"IMAGE".equals(m.getMediaType())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slots 0-2 must be IMAGE");
             }
+            validateContentType(m.getMediaSlot(), m.getContentType());
             // Pin mediaKey to the caller's own Storage path. Without this, a client could submit
             // listings/{otherUserId}/.../x.jpg and have the listing render someone else's media,
             // or smuggle path traversal segments past the public-read Firebase Storage rule.
@@ -123,20 +124,37 @@ public class ListingService {
         return toDto(saved);
     }
 
-    public ListingResponseDto findById(UUID id) {
+    public ListingResponseDto findById(UUID id, AppUser caller) {
         Listing entity = listingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id));
+        // Non-ACTIVE listings (DRAFT/PAUSED/SOLD/CANCELLED) are visible only to their
+        // owner. Hide existence with 404 rather than confirming it with a 403.
+        if (!"ACTIVE".equals(entity.getStatus())
+                && (caller == null || !caller.getId().equals(entity.getSellerUserId()))) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + id);
+        }
         return toDto(entity);
     }
 
-    public PageResponseDto<ListingResponseDto> findBySeller(UUID sellerUserId, int page, int size) {
+    public PageResponseDto<ListingResponseDto> findBySeller(UUID sellerUserId, AppUser caller, int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return toDtoPage(listingRepository.findAllBySellerUserId(sellerUserId, pageable));
+        boolean isOwner = caller != null && caller.getId().equals(sellerUserId);
+        Page<Listing> result = isOwner
+                ? listingRepository.findAllBySellerUserId(sellerUserId, pageable)
+                : listingRepository.findAllBySellerUserIdAndStatus(sellerUserId, "ACTIVE", pageable);
+        return toDtoPage(result);
     }
 
-    public PageResponseDto<ListingResponseDto> findByLot(UUID lotId, int page, int size) {
+    public PageResponseDto<ListingResponseDto> findByLot(UUID lotId, AppUser caller, int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return toDtoPage(listingRepository.findAllByLotId(lotId, pageable));
+        // Only the lot owner creates its listings, so lot ownership == seller identity.
+        boolean isOwner = caller != null && cattleLotRepository.findById(lotId)
+                .map(l -> caller.getId().equals(l.getOwnerUserId()))
+                .orElse(false);
+        Page<Listing> result = isOwner
+                ? listingRepository.findAllByLotId(lotId, pageable)
+                : listingRepository.findAllByLotIdAndStatus(lotId, "ACTIVE", pageable);
+        return toDtoPage(result);
     }
 
     public PageResponseDto<ListingResponseDto> findByStatus(
@@ -243,6 +261,7 @@ public class ListingService {
         if (req.getMediaSlot() < 3 && !"IMAGE".equals(req.getMediaType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slots 0-2 must be IMAGE");
         }
+        validateContentType(req.getMediaSlot(), req.getContentType());
         String expectedPrefix = "listings/" + caller.getFirebaseUid() + "/" + listing.getLotId() + "/";
         if (!isValidMediaKey(req.getMediaKey(), expectedPrefix)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -340,6 +359,20 @@ public class ListingService {
                 latestProfileByLot.get(lot.getId()),
                 locationsById.get(lot.getLocationId()));
         return ListingMapper.toDto(entity, media, lotSummary);
+    }
+
+    // Defense-in-depth: the server never sees the bytes, but it can ensure the declared
+    // contentType matches the slot's media kind (slot 3 = video, slots 0-2 = image).
+    // Mirrors the contentType constraint enforced by the Firebase Storage rules.
+    private static void validateContentType(int slot, String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "contentType is required");
+        }
+        String expectedPrefix = (slot == 3) ? "video/" : "image/";
+        if (!contentType.toLowerCase().startsWith(expectedPrefix)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "contentType must be " + expectedPrefix + "* for slot " + slot);
+        }
     }
 
     private static boolean isValidMediaKey(String key, String expectedPrefix) {

@@ -16,7 +16,11 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
     Page<Listing> findAllBySellerUserId(UUID sellerUserId, Pageable pageable);
 
+    Page<Listing> findAllBySellerUserIdAndStatus(UUID sellerUserId, String status, Pageable pageable);
+
     Page<Listing> findAllByLotId(UUID lotId, Pageable pageable);
+
+    Page<Listing> findAllByLotIdAndStatus(UUID lotId, String status, Pageable pageable);
 
     Page<Listing> findAllByStatus(String status, Pageable pageable);
 

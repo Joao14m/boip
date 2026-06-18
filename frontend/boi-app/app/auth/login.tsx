@@ -15,7 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/login.styles';
@@ -59,8 +59,18 @@ export default function LoginScreen() {
     if (!validate()) return;
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      router.replace('/(tabs)/feed');
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+
+      // Bloqueia o acesso enquanto o e-mail não for verificado e reenvia o link.
+      if (!cred.user.emailVerified) {
+        await sendEmailVerification(cred.user);
+        await auth.signOut();
+        setFormError('Confirme seu e-mail antes de entrar. Reenviamos o link de verificação.');
+        return;
+      }
+
+      // Deixa o index decidir o destino (onboarded → feed, senão → cadastro).
+      router.replace('/');
     } catch (e: any) {
       const code = e?.code ?? '';
       setFormError(FIREBASE_ERRORS[code] ?? 'Não foi possível entrar. Tente novamente.');

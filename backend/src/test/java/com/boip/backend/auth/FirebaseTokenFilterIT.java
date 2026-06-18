@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -26,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -129,5 +131,61 @@ class FirebaseTokenFilterIT {
                         .header("Authorization", "Bearer valid-onboarded-jwt"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("a@b.com"));
+    }
+
+    @Test
+    void onboardWithUnverifiedEmail_isRejected() throws Exception {
+        UUID locationId = jdbc.queryForObject("select id from location limit 1", UUID.class);
+
+        FirebaseToken tok = mock(FirebaseToken.class);
+        when(tok.getUid()).thenReturn("uid-unverified");
+        when(tok.getEmail()).thenReturn("spoof@example.com");
+        when(tok.isEmailVerified()).thenReturn(false);
+        when(firebaseAuth.verifyIdToken(eq("unverified-jwt"))).thenReturn(tok);
+
+        mvc.perform(post("/auth/onboard")
+                        .header("Authorization", "Bearer unverified-jwt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(onboardBody(locationId)))
+                .andExpect(status().isForbidden());
+
+        // Nada deve ter sido persistido para um e-mail não verificado.
+        org.junit.jupiter.api.Assertions.assertTrue(
+                appUserRepository.findByFirebaseUid("uid-unverified").isEmpty());
+    }
+
+    @Test
+    void onboardWithVerifiedEmail_succeeds() throws Exception {
+        UUID locationId = jdbc.queryForObject("select id from location limit 1", UUID.class);
+
+        FirebaseToken tok = mock(FirebaseToken.class);
+        when(tok.getUid()).thenReturn("uid-verified");
+        when(tok.getEmail()).thenReturn("real@example.com");
+        when(tok.isEmailVerified()).thenReturn(true);
+        when(firebaseAuth.verifyIdToken(eq("verified-jwt"))).thenReturn(tok);
+
+        mvc.perform(post("/auth/onboard")
+                        .header("Authorization", "Bearer verified-jwt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(onboardBody(locationId)))
+                .andExpect(status().isOk());
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                appUserRepository.findByFirebaseUid("uid-verified").isPresent());
+    }
+
+    private static String onboardBody(UUID locationId) {
+        return """
+                {
+                  "firstName": "João",
+                  "lastName": "Silva",
+                  "phone": "11999990000",
+                  "personDoc": "11144477735",
+                  "docType": "CPF",
+                  "hasCar": false,
+                  "carNumber": null,
+                  "locationId": "%s"
+                }
+                """.formatted(locationId);
     }
 }

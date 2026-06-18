@@ -40,7 +40,7 @@ public class ListingController {
 
     @GetMapping("/{id}")
     public ListingResponseDto findById(@PathVariable UUID id) {
-        return listingService.findById(id);
+        return listingService.findById(id, currentAppUserOrNull());
     }
 
     // Filter by seller, lot, or status (marketplace feed). All results are paginated.
@@ -53,8 +53,8 @@ public class ListingController {
             @RequestParam(required = false) Double lng,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
-        if (sellerUserId != null) return listingService.findBySeller(sellerUserId, page, size);
-        if (lotId != null) return listingService.findByLot(lotId, page, size);
+        if (sellerUserId != null) return listingService.findBySeller(sellerUserId, currentAppUserOrNull(), page, size);
+        if (lotId != null) return listingService.findByLot(lotId, currentAppUserOrNull(), page, size);
         String effectiveStatus = (status != null && !status.isBlank()) ? status.toUpperCase() : "ACTIVE";
         return listingService.findByStatus(effectiveStatus, lat, lng, currentAppUserOrNull(), page, size);
     }

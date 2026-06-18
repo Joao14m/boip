@@ -35,6 +35,11 @@ public class AuthService {
         if (me.email() == null || me.email().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "missing_email");
         }
+        
+        // Bloqueia onboard com email não verificado (token Firebase carrega email_verified)
+        if (!me.emailVerified()){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "email_not_verified");
+        }
 
         // Regra/consistência: locationId precisa existir
         // (req.locationId já foi validado como NOT NULL no DTO)

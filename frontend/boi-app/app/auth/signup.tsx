@@ -16,10 +16,13 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { api } from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
 import { AgreGreen } from '@/constants/theme';
 import { styles } from '@/styles/auth/signup.styles';
 import { FieldError } from '@/components/FieldError';
@@ -61,8 +64,6 @@ const isValidCnpj = (doc: string): boolean => {
 };
 
 export default function SignupScreen() {
-  const { refreshMe } = useAuth();
-
   const [firstName, setFirstName]                   = useState('');
   const [lastName, setLastName]                     = useState('');
   const [email, setEmail]                           = useState('');
@@ -146,8 +147,23 @@ export default function SignupScreen() {
         setLoading(false);
         return;
       }
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await api.post('/auth/onboard', {
+      // Cria a conta Firebase e dispara o e-mail de verificação. Se o e-mail já existe
+      // (cadastro anterior não concluído), reentra com a senha informada.
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        await sendEmailVerification(cred.user);
+      } catch (err: any) {
+        if (err?.code === 'auth/email-already-in-use') {
+          const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+          if (!cred.user.emailVerified) await sendEmailVerification(cred.user);
+        } else {
+          throw err;
+        }
+      }
+
+      // O onboard é adiado até o e-mail ser verificado — o backend rejeita
+      // email_not_verified. Levamos os dados do formulário para a tela de verificação.
+      const payload = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: phone.trim(),
@@ -156,11 +172,21 @@ export default function SignupScreen() {
         hasCar,
         carNumber: hasCar ? carNumber.trim() : null,
         locationId: match.id,
+      };
+
+      router.replace({
+        pathname: '/auth/verify-email',
+        params: { email: email.trim(), payload: JSON.stringify(payload) },
       });
-      await refreshMe();
-      router.replace('/(tabs)/feed');
     } catch (e: any) {
-      setFormError(e.message ?? 'Não foi possível criar a conta. Tente novamente.');
+      const code = e?.code ?? '';
+      const msg =
+        code === 'auth/invalid-credential'
+          ? 'E-mail já cadastrado com outra senha.'
+          : code === 'auth/weak-password'
+          ? 'A senha é muito fraca.'
+          : e.message ?? 'Não foi possível criar a conta. Tente novamente.';
+      setFormError(msg);
     } finally {
       setLoading(false);
     }
