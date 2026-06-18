@@ -15,6 +15,7 @@ import {
   MapPin,
   Pause,
   Play,
+  Rocket,
   ShieldCheck,
   Trash2,
 } from "lucide-react";
@@ -367,6 +368,21 @@ export default function ListingDetailPage() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-agre-muted">
                   Gerenciar anúncio
                 </p>
+                {listing.status === "DRAFT" && (
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange("ACTIVE")}
+                    disabled={ownerActionLoading !== null}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 text-sm font-bold text-green-700 transition-colors hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {ownerActionLoading === "activate" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Rocket className="h-4 w-4" />
+                    )}
+                    Publicar anúncio
+                  </button>
+                )}
                 {listing.status === "ACTIVE" && (
                   <button
                     type="button"
