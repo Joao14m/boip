@@ -100,6 +100,8 @@ export default function CreateListingScreen() {
 
     if (!priceAmount || Number(priceAmount) <= 0)
       e.priceAmount = Number(priceAmount) < 0 ? 'O valor não pode ser negativo.' : 'Informe um valor válido.';
+    else if (Number(priceAmount) >= 3000)
+      e.priceAmount = 'O valor deve ser menor que R$ 3.000.';
     if (images.length === 0)               e.images     = 'Adicione pelo menos uma foto.';
     setErrors(e);
     return Object.keys(e).length === 0;
