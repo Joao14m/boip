@@ -41,6 +41,7 @@ export default function ProfileScreen() {
   const [loadingListings, setLoadingListings] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '', personDoc: '', docType: '' });
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   /* ── fetch user ── */
   useEffect(() => {
@@ -62,20 +63,33 @@ export default function ProfileScreen() {
   }, [userId]);
 
   /* ── fetch listings (re-runs on screen focus to pick up new drafts/active) ── */
-  useFocusEffect(
-    useCallback(() => {
-      if (!userId) {
-        setLoadingListings(false);
-        setListings([]);
-        return;
-      }
-      setLoadingListings(true);
-      api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&size=50`)
-        .then((data) => setListings(data.content ?? []))
-        .catch(console.error)
-        .finally(() => setLoadingListings(false));
-    }, [userId])
-  );
+  const loadListings = useCallback(() => {
+    if (!userId) {
+      setLoadingListings(false);
+      setListings([]);
+      return;
+    }
+    setLoadingListings(true);
+    api.get<{ content: any[] }>(`/api/listings?sellerUserId=${userId}&size=50`)
+      .then((data) => setListings(data.content ?? []))
+      .catch(console.error)
+      .finally(() => setLoadingListings(false));
+  }, [userId]);
+
+  useFocusEffect(loadListings);
+
+  /* ── publish a draft/paused listing into the feed ── */
+  const publishListing = useCallback(async (id: string) => {
+    try {
+      setPublishingId(id);
+      await api.patch(`/api/listings/${id}/status`, { status: 'ACTIVE' });
+      loadListings();
+    } catch (e: any) {
+      Alert.alert('Erro', e.message ?? 'Não foi possível publicar o anúncio.');
+    } finally {
+      setPublishingId(null);
+    }
+  }, [loadListings]);
 
   /* ── format document ── */
   const formatDoc = useCallback((doc: string, type: string) => {
@@ -164,6 +178,29 @@ export default function ProfileScreen() {
           <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
             <Text style={[styles.statusText, { color: sc.text }]}>{statusLabel[item.status] ?? item.status}</Text>
           </View>
+
+          {(item.status === 'DRAFT' || item.status === 'PAUSED') && (
+            <Pressable
+              style={({ pressed }) => ({
+                marginTop: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                backgroundColor: pressed ? AgreGreen.dark : AgreGreen.button,
+                borderRadius: 10,
+                paddingVertical: 10,
+                opacity: publishingId === item.id ? 0.6 : 1,
+              })}
+              onPress={() => publishListing(item.id)}
+              disabled={publishingId === item.id}
+            >
+              <Ionicons name="rocket-outline" size={16} color="#fff" />
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>
+                {publishingId === item.id ? 'Publicando...' : 'Publicar no feed'}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
     );

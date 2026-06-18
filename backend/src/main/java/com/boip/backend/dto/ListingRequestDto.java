@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -23,7 +24,8 @@ public class ListingRequestDto {
     @NotBlank @Pattern(regexp = "PER_HEAD|TOTAL")
     String priceType;
 
-    @NotNull @DecimalMin("0.01")
+    // Temporary cap: prices must be below R$ 3000 for now.
+    @NotNull @DecimalMin("0.01") @DecimalMax(value = "3000.00", inclusive = false)
     BigDecimal priceAmount;
 
     @Pattern(regexp = "^[A-Z]{3}$", message = "currency must be a 3-letter ISO code")
